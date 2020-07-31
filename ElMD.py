@@ -93,7 +93,7 @@ class ElMD():
         else:
             raise ValueError(f"Must enter a valid string. Your input was type: {type(comp1)}")
 
-        return self._dual_opt(comp1, comp2)
+        return self._EMD(comp1, comp2)
 
     def _EMD(self, comp1, comp2):
         '''
