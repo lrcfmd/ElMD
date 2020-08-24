@@ -35,7 +35,7 @@ import numpy as np
 from scipy.spatial.distance import squareform
 
 def main():
-    x = ElMD("Li7La3Hf2O12 (tetragonal)")
+    x = ElMD("Li7La3Hf2O12")
     y = ElMD("CsPbI3")
     z = ElMD("Zr3AlN")
 
