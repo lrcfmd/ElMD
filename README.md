@@ -11,9 +11,11 @@ We recommend installation via pip
 For simple usage initiate an object with its compositional formula
 
 `from ElMD import ElMD`
+
 `x = ElMD("CaTiO3")`
 
 Calculate the distance to a second object with the `elmd` method. 
+
 `x.elmd("SrTiO3")` 
 
 `0.2`
@@ -21,6 +23,7 @@ Calculate the distance to a second object with the `elmd` method.
 Alternate chemical scales may be accessed via the "metric" argument, e.g.
 
 `x = ElMD("CaTiO3", metric="atomic")`
+
 `x.elmd("SrTiO3")`
 
 `3.6`
