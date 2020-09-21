@@ -25,5 +25,7 @@ Alternate chemical scales may be accessed via the "metric" argument, e.g.
 
 `3.6`
 
+## Documentation
 
+Complete documentation may be found at www.elmd.io/api
 
