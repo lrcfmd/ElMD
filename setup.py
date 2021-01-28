@@ -13,6 +13,7 @@ setup(
   install_requires=[            
           'numpy',
           'scipy',
+          'numba'
       ],
   classifiers=[
     'Development Status :: 5 - Production/Stable',  
