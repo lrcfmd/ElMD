@@ -4,13 +4,14 @@ The Element Movers Distance (ElMD) is a similarity measure for chemical composit
 
 This repository provides the reference implementations as described in our paper "[The Earth Movers Distance as a metric for the space of inorganic compositions](https://chemrxiv.org/articles/preprint/The_Earth_Mover_s_Distance_as_a_Metric_for_the_Space_of_Inorganic_Compositions/12777566)". 
 
-If you wish to compute this metric between lots of compositions, we recommend using the ElM2D high-performance library, which may be found at [www.github.com/lrcfmd/ElMD](www.github.com/lrcfmd/ElMD).
+If you wish to compute this metric between lots of compositions, the ElM2D high-performance library may be more useful and can be found at [www.github.com/lrcfmd/ElMD](www.github.com/lrcfmd/ElMD).
 
 We recommend installation via pip and python 3.7.
 
-`pip install python==3.7`
-`pip install ElMD`
-
+```
+pip install python==3.7
+pip install ElMD
+```
 The branch "njit" contatins byte-compiled python using the numba package which is much faster in practice. During testing this had a tendency to break python environments with materials science python libraries, so use with care. The pip version is stable with all environments if you do have issues.
 
 ## Usage
