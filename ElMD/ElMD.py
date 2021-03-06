@@ -30,6 +30,7 @@ __maintainer__ = "Cameron Hargreaves"
 import json 
 import re
 import os 
+import pkg_resources
 
 from collections import Counter
 from copy import deepcopy
@@ -60,8 +61,9 @@ def main():
 
 def EMD(comp1, comp2, lookup, table):
     '''
-    A numba compiled EMD function to compare two sets of pettifor labels and
-    ratios as a ratio vector in the form (103, )
+    A numba compiled EMD function to compare two sets of labels an associated 
+    element feature matrix, and lookup table to map elements to indices, and 
+    return the associated EMD.
     '''
     
     if type(comp1) is str:
@@ -192,10 +194,9 @@ class ElMD():
 
     def _get_periodic_tab(self):
         """
-        Attempt to load periodic data from the same folder, else download
-        it from the web TODO
+        Attempt to load periodic data from the same folder TODO
         """
-        json_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "./ElementDict.json")
+        json_file_path = pkg_resources.resource_string(__name__, "ElementDict.json")
 
         with open(json_file_path, 'r') as j:
             ElementDict = json.loads(j.read())
