@@ -7,6 +7,8 @@ We recommend installation via pip
 
 `pip install ElMD`
 
+The branch "njit" contatins byte-compiled python using the numba package which is much faster in practice. During testing this had a tendency to break python environments with materials science python libraries, so use with care. The pip version is stable with all environments if you do have issues.
+
 ## Usage
 For simple usage initiate an object with its compositional formula
 
