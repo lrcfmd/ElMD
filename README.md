@@ -96,12 +96,10 @@ Whilst not the initial purpose, a compositional based feature vector may be gene
 
 Note that this vector representation is not used at any point during the ElMD distance calculation and is provided solely for convenience.
 
-We construct this by taking the dot product of the ratios of each element with the features of these elements, and dividing by the total number of elements in the compound.
+We construct this by taking the dot product of the ratios of each element with the features of these elements. Pass the argument feature_pooling="mean" to divide by the total number of elements in the compound.
 
 ```python
 feature_vector = np.dot(ratio_vector, element_feature_matrix)
-        
-return feature_vector / n_elements
 ```
 
 This is accessed through the `feature_vector` attribute.
