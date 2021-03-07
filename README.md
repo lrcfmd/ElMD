@@ -36,7 +36,18 @@ Alternate chemical scales may be accessed via the "metric" argument, e.g.
 3.6
 ```
 
-You may use either traditional discrete scales or machine learnt representations for each element. In this instance a vector has been generated for each element, and the distance between elements is the Euclidean distance between these. Due to the disparity in magnitudes of some of these values, a selection have also been scaled.
+The `elmd()` method is overloaded to take two strings, with the choice of elemental metric taken from the first class.
+
+```python
+> elmd = ElMD().elmd
+> elmd("NaCl", "LiCl")
+0.5
+```
+
+## Elemental Similarity
+You may use either traditional discrete scales or machine learnt representations for each element. In this instance a vector has been generated for each element, and the distance between elements (not compositions!) is the Euclidean distance. 
+
+Due to the disparity in magnitudes of some of these values, a select few have additionally been scaled.
 
 Linear:
 - mendeleev
@@ -60,14 +71,6 @@ Machine Learnt:
 
 TODO HYPERLINK REFERENCES FOR DESCRIPTORS, MOSTLY FROM ROOST AND CRABNET.
 
-The `elmd()` method is overloaded to take two strings, with the choice of elemental metric taken from the first class.
-
-```python
-> elmd = ElMD().elmd
-> elmd("NaCl", "LiCl")
-0.5
-```
-
 The Euclidean distance between these vectors is taken as the measure of elemental similarity. 
 
 ```python
@@ -90,6 +93,8 @@ The feature dictionary can be accessed through the `periodic_tab` attribute:
 
 ## Featurizing
 Whilst not the initial purpose, a compositional based feature vector may be generated from ElMD objects should you require it. This is a mean pooling of the weighted composition feature matrix. 
+
+Note that this vector representation is not used at any point during the ElMD distance calculation and is provided solely for convenience.
 
 We construct this by taking the dot product of the ratios of each element with the features of these elements, and dividing by the total number of elements in the compound.
 
