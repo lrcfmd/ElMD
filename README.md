@@ -141,11 +141,9 @@ year = {2020},
 doi = {10.1021/acs.chemmater.0c03381},
 URL = { 
         https://doi.org/10.1021/acs.chemmater.0c03381
-    
 },
 eprint = { 
         https://doi.org/10.1021/acs.chemmater.0c03381
-    
 }
 }
 ```
