@@ -17,13 +17,13 @@ pip install ElMD
 For simple usage initiate an object with its compositional formula
 
 ```python
-from ElMD import ElMD
-x = ElMD("CaTiO3")
+> from ElMD import ElMD
+> x = ElMD("CaTiO3")
 ```
 
 Calculate the distance to a second object with the `elmd` method. 
 
-```
+```python
 > x.elmd("SrTiO3")
 0.2
 ```
@@ -59,23 +59,56 @@ Machine Learnt:
 
 TODO HYPERLINK REFERENCES FOR DESCRIPTORS, MOSTLY FROM ROOST AND CRABNET.
 
-The function is overloaded to take two strings (the metric argument is taken from the class) for ease with implementing.
+The `elmd()` method is overloaded to take two strings, with the choice of elemental metric taken from the first class..
 
 ```python
-elmd = ElMD().elmd
-elmd("NaCl", "LiCl")
+> elmd = ElMD().elmd
+> elmd("NaCl", "LiCl")
+0.5
+```
+
+The Euclidean distance between these vectors is taken as the measure of elemental similarity. 
+
+```python
+> x = ElMD("NaCl", metric="magpie")
+> x.elmd("LiCl")
+46.697806
+
+> x = ElMD("NaCl", metric="magpie_sc")
+> x.elmd("LiCl")
+0.688539
+```
+
+The feature dictionary can be accessed through the `periodic_tab` attribute:
+
+```python
+> featurizingDict = ElMD().periodic_tab
+> featurizingDict["magpie"]["H"]
+[92.0, 1.00794, 14.01, 1.0, 1.0, 31.0, 2.2, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 6.615, 7.853, 0.0, 194.0]
 ```
 
 ## Featurizing
-Whilst not the initial purpose, a feature vector may be generated from ElMD objects should you require it,. This is simply the dot product of the ratios of each element by the features of these elements, divided by the number of elements in the compound.
+Whilst not the initial purpose, a feature vector may be generated from ElMD objects should you require it. This is a mean pooling of the weighted compositional based feature vector. 
+
+We construct this by taking the dot product of the ratios of each element with the features of these elements, and dividing by the total number of elements in the compound.
 
 ```python
-> x = ElMD("NaCl", metric="magpie_sc")
+feature_vector = np.dot(ratio_vector, element_feature_matrix)
+        
+return feature_vector / n_elements
+```
+
+This is accessed through the `feature_vector` attribute.
+
+```python
+> x = ElMD("NaCl", metric="magpie")
 > x.feature_vector
-[-0.625      -0.08109291 -0.61183562 -0.57087692  0.0684659  -0.61122024
- -0.2043967   0.24933184 -0.37935793  0.37782711 -0.44429256 -0.33681995
- -0.40697298  0.45138889 -0.09132503 -0.31499791 -0.22061063 -0.36466139
-  0.01337025  0.06100075 -0.10391629 -0.29680666]
+array([ 24.        ,  14.61069232, 135.6175    ,   4.5       ,
+         1.5       ,  67.        ,   1.0225    ,   0.75      ,
+         1.25      ,   0.        ,   0.        ,   2.        ,
+         0.25      ,   0.25      ,   0.        ,   0.        ,
+         0.5       ,  13.43520833,   0.62325   ,   0.        ,
+        73.25      ])
 ```
 
 ## Documentation
