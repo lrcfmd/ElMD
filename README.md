@@ -55,18 +55,22 @@ Linear:
 - atomic
 - mod_petti
 
-Machine Learnt:
+Chemically Derived:
 - oliynyk 
 - oliynyk_sc
-- cgcnn 
-- elemnet 
 - jarvis 
 - jarvis_sc 
 - magpie 
 - magpie_sc 
+
+Machine Learnt:
+- cgcnn 
+- elemnet 
 - mat2vec 
 - matscholar 
 - megnet16 
+
+Random Numbers:
 - random_200
 
 TODO HYPERLINK REFERENCES FOR DESCRIPTORS, MOSTLY FROM ROOST AND CRABNET.
@@ -113,7 +117,7 @@ array([ 94.    ,  35.453 , 171.6   ,  17.    ,   3.    , 102.    ,
          0.    ,   1.    ,   0.    ,   0.    ,   1.    ,  24.4975,
          2.493 ,   0.    ,  64.    ])
 
-# Average weighted feature vector by each elements contribution
+# Aggregate vector by each elements contribution
 > x = ElMD("NaCl", metric="magpie").feature_vector
 array([ 48.        ,  29.22138464, 271.235     ,   9.        ,
          3.        , 134.        ,   2.045     ,   1.5       ,
@@ -122,6 +126,7 @@ array([ 48.        ,  29.22138464, 271.235     ,   9.        ,
          1.        ,  26.87041667,   1.2465    ,   0.        ,
        146.5       ])
 
+# Divide this feature vector by the number of elements
 > x = ElMD("NaCl", metric="magpie", feature_pooling="mean").feature_vector
 array([ 24.        ,  14.61069232, 135.6175    ,   4.5       ,
          1.5       ,  67.        ,   1.0225    ,   0.75      ,
