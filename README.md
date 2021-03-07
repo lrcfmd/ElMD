@@ -38,24 +38,24 @@ Alternate chemical scales may be accessed via the "metric" argument, e.g.
 You may use either traditional discrete scales or machine learnt representations for each element. In this instance a vector has been generated for each element, and the distance between elements is the Euclidean distance between these. Due to the disparity in magnitudes of some of these values, a selection have also been scaled.
 
 Linear:
-- 'mendeleev'
-- 'petti'
-- 'atomic'
-- 'mod_petti'
+- mendeleev
+- petti
+- atomic
+- mod_petti
 
 Machine Learnt:
-- 'oliynyk' 
-- 'oliynyk_sc'
-- 'cgcnn' 
-- 'elemnet' 
-- 'jarvis' 
-- 'jarvis_sc' 
-- 'magpie' 
-- 'magpie_sc' 
-- 'mat2vec' 
-- 'matscholar' 
-- 'megnet16' 
-- 'random_200'
+- oliynyk 
+- oliynyk_sc
+- cgcnn 
+- elemnet 
+- jarvis 
+- jarvis_sc 
+- magpie 
+- magpie_sc 
+- mat2vec 
+- matscholar 
+- megnet16 
+- random_200
 
 TODO HYPERLINK REFERENCES FOR DESCRIPTORS, MOSTLY FROM ROOST AND CRABNET.
 
