@@ -32,6 +32,7 @@ import re
 import os 
 import pkg_resources
 
+from distutils.sysconfig import get_python_lib
 from collections import Counter
 from copy import deepcopy
 
@@ -196,9 +197,12 @@ class ElMD():
         """
         Attempt to load periodic data from the same folder TODO
         """
-        json_file_path = pkg_resources.resource_string(__name__, "ElementDict.json")
+        # json_file_path = "ElMD/ElementDict.json"
+        import os 
+        
+        python_package_path = get_python_lib()
 
-        with open(json_file_path, 'r') as j:
+        with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
             ElementDict = json.loads(j.read())
         
         return ElementDict
