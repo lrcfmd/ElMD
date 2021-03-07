@@ -115,6 +115,14 @@ array([ 94.    ,  35.453 , 171.6   ,  17.    ,   3.    , 102.    ,
 
 # Average weighted feature vector by each elements contribution
 > x = ElMD("NaCl", metric="magpie").feature_vector
+array([ 48.        ,  29.22138464, 271.235     ,   9.        ,
+         3.        , 134.        ,   2.045     ,   1.5       ,
+         2.5       ,   0.        ,   0.        ,   4.        ,
+         0.5       ,   0.5       ,   0.        ,   0.        ,
+         1.        ,  26.87041667,   1.2465    ,   0.        ,
+       146.5       ])
+
+> x = ElMD("NaCl", metric="magpie", feature_pooling="mean").feature_vector
 array([ 24.        ,  14.61069232, 135.6175    ,   4.5       ,
          1.5       ,  67.        ,   1.0225    ,   0.75      ,
          1.25      ,   0.        ,   0.        ,   2.        ,
