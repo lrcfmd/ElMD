@@ -98,14 +98,17 @@ class ElMD():
     # all floats to capture the decimal places
     FP_MULTIPLIER = 100000000
 
-    def __init__(self, formula="", metric="magpie_sc"):
+    def __init__(self, formula="", metric="magpie_sc", feature_pooling="mean"):
         self.metric = metric
         self.formula = ''.join(formula.split()) # Remove all whitespace
         self.periodic_tab = self._get_periodic_tab()
         self.lookup = self._gen_lookup()
+
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
         self.ratio_vector = self._gen_ratio_vector()
+
+        self.feature_pooling = feature_pooling
         self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
 
@@ -174,8 +177,13 @@ class ElMD():
         element_features = np.nan_to_num(numeric)
 
         weighted_vector = np.dot(self.ratio_vector, element_features)
+
+        if self.feature_pooling == "mean":
+            with np.seterr(divide='ignore', invalid='ignore'):
+                weighted_vector = weighted_vector / len(self.normed_composition)
         
-        return weighted_vector / len(self.normed_composition)
+        elif self.feature_pooling == "sum"
+            return weighted_vector
 
     def _gen_pretty(self):
         '''
