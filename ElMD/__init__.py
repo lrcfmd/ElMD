@@ -1,2 +1,2 @@
-from ElMD.ElMD import ElMD
+from ElMD.ElMD import ElMD, EMD
 
