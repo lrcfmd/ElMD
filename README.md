@@ -131,20 +131,20 @@ If you would like to cite this code in your work, please use the Chemistry of Ma
 
 ```
 @article{doi:10.1021/acs.chemmater.0c03381,
-author = {Hargreaves, Cameron J. and Dyer, Matthew S. and Gaultois, Michael W. and Kurlin, Vitaliy A. and Rosseinsky, Matthew J.},
-title = {The Earth Mover’s Distance as a Metric for the Space of Inorganic Compositions},
-journal = {Chemistry of Materials},
-volume = {32},
-number = {24},
-pages = {10610-10620},
-year = {2020},
-doi = {10.1021/acs.chemmater.0c03381},
-URL = { 
+    author = {Hargreaves, Cameron J. and Dyer, Matthew S. and Gaultois, Michael W. and Kurlin, Vitaliy A. and Rosseinsky, Matthew J.},
+    title = {The Earth Mover’s Distance as a Metric for the Space of Inorganic Compositions},
+    journal = {Chemistry of Materials},
+    volume = {32},
+    number = {24},
+    pages = {10610-10620},
+    year = {2020},
+    doi = {10.1021/acs.chemmater.0c03381},
+    URL = { 
         https://doi.org/10.1021/acs.chemmater.0c03381
-},
-eprint = { 
+    },
+    eprint = { 
         https://doi.org/10.1021/acs.chemmater.0c03381
-}
+    }
 }
 ```
 
