@@ -98,7 +98,7 @@ class ElMD():
     # all floats to capture the decimal places
     FP_MULTIPLIER = 100000000
 
-    def __init__(self, formula="", metric="magpie_sc", feature_pooling="mean"):
+    def __init__(self, formula="", metric="magpie_sc", feature_pooling="agg"):
         self.metric = metric
         self.formula = ''.join(formula.split()) # Remove all whitespace
         self.periodic_tab = self._get_periodic_tab()
@@ -723,7 +723,7 @@ def network_simplex(source_demands, sink_demands, network_costs):
     # Create costs and capacities for the arcs between nodes
     network_capac = np.array([np.array([source_demands[i], sink_demands[j]]).min() for i, x in np.ndenumerate(sources) for j, y in np.ndenumerate(sinks)], dtype=np.float64) * fp_multiplier
 
-    # TODO finish
+    # TODO finish?
     # If there is only one node on either side we can return capacity and costs
     # if sources.shape[0] == 1 or sinks.shape[0] == 1:
     #     tot_costs = np.array([cost * network_capac[i_ret] for i_ret, cost in np.ndenumerate(network_costs)], dtype=np.float64)
