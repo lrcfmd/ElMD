@@ -35,6 +35,7 @@ Alternate chemical scales may be accessed via the "metric" argument, e.g.
 > x.elmd("SrTiO3")
 3.6
 ```
+
 You may use either traditional discrete scales or machine learnt representations for each element. In this instance a vector has been generated for each element, and the distance between elements is the Euclidean distance between these. Due to the disparity in magnitudes of some of these values, a selection have also been scaled.
 
 Linear:
@@ -59,7 +60,7 @@ Machine Learnt:
 
 TODO HYPERLINK REFERENCES FOR DESCRIPTORS, MOSTLY FROM ROOST AND CRABNET.
 
-The `elmd()` method is overloaded to take two strings, with the choice of elemental metric taken from the first class..
+The `elmd()` method is overloaded to take two strings, with the choice of elemental metric taken from the first class.
 
 ```python
 > elmd = ElMD().elmd
@@ -83,12 +84,12 @@ The feature dictionary can be accessed through the `periodic_tab` attribute:
 
 ```python
 > featurizingDict = ElMD().periodic_tab
-> featurizingDict["magpie"]["H"]
-[92.0, 1.00794, 14.01, 1.0, 1.0, 31.0, 2.2, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 6.615, 7.853, 0.0, 194.0]
+> featurizingDict["magpie"]["Na"]
+[2.0, 22.98976928, 370.87, 1.0, 3.0, 166.0, 0.93, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 29.2433333333, 0.0, 0.0, 229.0]
 ```
 
 ## Featurizing
-Whilst not the initial purpose, a feature vector may be generated from ElMD objects should you require it. This is a mean pooling of the weighted compositional based feature vector. 
+Whilst not the initial purpose, a compositional based feature vector may be generated from ElMD objects should you require it. This is a mean pooling of the weighted composition feature matrix. 
 
 We construct this by taking the dot product of the ratios of each element with the features of these elements, and dividing by the total number of elements in the compound.
 
@@ -101,8 +102,16 @@ return feature_vector / n_elements
 This is accessed through the `feature_vector` attribute.
 
 ```python
-> x = ElMD("NaCl", metric="magpie")
+# For single element compositions, equivalent to x.periodic_tab["magpie"]["Cl"]
+> x = ElMD("Cl", metric="magpie")
 > x.feature_vector
+array([ 94.    ,  35.453 , 171.6   ,  17.    ,   3.    , 102.    ,
+         3.16  ,   2.    ,   5.    ,   0.    ,   0.    ,   7.    ,
+         0.    ,   1.    ,   0.    ,   0.    ,   1.    ,  24.4975,
+         2.493 ,   0.    ,  64.    ])
+
+# Average weighted feature vector by each elements contribution
+> x = ElMD("NaCl", metric="magpie").feature_vector
 array([ 24.        ,  14.61069232, 135.6175    ,   4.5       ,
          1.5       ,  67.        ,   1.0225    ,   0.75      ,
          1.25      ,   0.        ,   0.        ,   2.        ,
