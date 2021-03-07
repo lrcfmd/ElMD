@@ -175,8 +175,7 @@ class ElMD():
             try:
                 numeric[self.lookup[k]] = self.periodic_tab[self.metric][k]
             except:
-                print(f"Failed to process {self.formula} with {self.metric} due to unknown element {k}, using zeros to represent {k}.")
-                numeric[self.lookup[k]] = np.zeros(len(self.periodic_tab[self.metric]["H"]))
+                print(f"Failed to process {self.formula} with {self.metric} due to unknown element {k}, discarding this element.")
 
         element_features = np.nan_to_num(numeric)
 
