@@ -197,9 +197,6 @@ class ElMD():
         """
         Attempt to load periodic data from the same folder TODO
         """
-        # json_file_path = "ElMD/ElementDict.json"
-        import os 
-        
         python_package_path = get_python_lib()
 
         with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
