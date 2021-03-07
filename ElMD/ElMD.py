@@ -179,11 +179,10 @@ class ElMD():
         weighted_vector = np.dot(self.ratio_vector, element_features)
 
         if self.feature_pooling == "mean":
-            with np.seterr(divide='ignore', invalid='ignore'):
-                weighted_vector = weighted_vector / len(self.normed_composition)
+            np.seterr(divide='ignore', invalid='ignore')
+            weighted_vector = weighted_vector / len(self.normed_composition)
         
-        elif self.feature_pooling == "sum"
-            return weighted_vector
+        return weighted_vector
 
     def _gen_pretty(self):
         '''
@@ -316,11 +315,10 @@ class ElMD():
 
         try:
             atomic_num = keys.index(element)
-
             return atomic_num
+
         # If this fails for any reason return -1
         except:
-
             return -1
 
     def _return_positions(self, composition):
