@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "1.0.0"
+__version__ = "0.3.0"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -114,8 +114,6 @@ class ElMD():
         Calculate the minimal cost flow between two weighted vectors using the
         network simplex method. This is overloaded to accept a range of input
         types.
-
-        TODO Remove some of the extra function parameters?
         '''
         if comp1 == None:
             comp1 = self.ratio_vector
@@ -173,14 +171,15 @@ class ElMD():
         for i, k in enumerate(self.normed_composition.keys()):
             numeric[self.lookup[k]] = self.periodic_tab[self.metric][k]
 
-        weighted_vector = np.dot(self.ratio_vector, numeric)
+        element_features = np.nan_to_num(numeric)
+
+        weighted_vector = np.dot(self.ratio_vector, element_features)
         
         return weighted_vector / len(self.normed_composition)
 
     def _gen_pretty(self):
         '''
-        Return a normalized formula string from the vector format, TODO clearer
-        as a list comprehension or too long?
+        Return a normalized formula string from the vector format
         '''
         inds = np.where(self.ratio_vector != 0.0)[0]
         pretty_form = ""
@@ -195,7 +194,7 @@ class ElMD():
 
     def _get_periodic_tab(self):
         """
-        Attempt to load periodic data from the same folder TODO
+        Load periodic data from the python site_packages/ElMD folder
         """
         python_package_path = get_python_lib()
 
