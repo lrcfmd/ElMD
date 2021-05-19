@@ -41,7 +41,7 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
-    x = ElMD("NaCl", metric="magpie_sc")
+    x = ElMD("NaCl", metric="mod_petti")
     print(x.feature_vector)
     print(x.elmd("LiCl"))
     x = ElMD("Li7La3Hf2O12", metric="jarvis_sc")
