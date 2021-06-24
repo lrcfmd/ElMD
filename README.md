@@ -1,6 +1,6 @@
 # ElMD
 
-![A drawing of ants moving earth](https://i.imgur.com/qRSOTXm.png)
+![A drawing of ants moving earth](https://i.imgur.com/fg8Nrma.png)
 
 The Element Movers Distance (ElMD) is a similarity measure for chemical compositions. This distance between two compositions is calculated from the minimal amount of work taken to transform one distribution of elements to another along the modified Pettifor scale. 
 
