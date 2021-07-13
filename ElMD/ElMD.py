@@ -32,7 +32,7 @@ import re
 import os 
 import pkg_resources
 
-from distutils.sysconfig import get_python_lib
+from site import getsitepackages
 from collections import Counter
 from copy import deepcopy
 
@@ -41,7 +41,7 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
-    x = ElMD("NaCl", metric="magpie_sc")
+    x = ElMD("NaCl", metric="mod_petti")
     print(x.feature_vector)
     print(x.elmd("LiCl"))
     x = ElMD("Li7La3Hf2O12", metric="jarvis_sc")
@@ -98,7 +98,7 @@ class ElMD():
     # all floats to capture the decimal places
     FP_MULTIPLIER = 100000000
 
-    def __init__(self, formula="", metric="magpie_sc", feature_pooling="agg"):
+    def __init__(self, formula="", metric="mod_petti", feature_pooling="agg"):
         self.metric = metric
         self.formula = ''.join(formula.split()) # Remove all whitespace
         self.periodic_tab = self._get_periodic_tab()
@@ -206,7 +206,13 @@ class ElMD():
         """
         Load periodic data from the python site_packages/ElMD folder
         """
-        python_package_path = get_python_lib()
+        paths = getsitepackages()
+        for p in paths:
+            try:
+                if "ElMD" in os.listdir(p):
+                    python_package_path = p
+            except:
+                pass 
 
         with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
             ElementDict = json.loads(j.read())
