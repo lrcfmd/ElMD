@@ -126,14 +126,6 @@ array([ 48.        ,  29.22138464, 271.235     ,   9.        ,
          1.        ,  26.87041667,   1.2465    ,   0.        ,
        146.5       ])
 
-# Divide this feature vector by the number of elements
-> x = ElMD("NaCl", metric="magpie", feature_pooling="mean").feature_vector
-array([ 24.        ,  14.61069232, 135.6175    ,   4.5       ,
-         1.5       ,  67.        ,   1.0225    ,   0.75      ,
-         1.25      ,   0.        ,   0.        ,   2.        ,
-         0.25      ,   0.25      ,   0.        ,   0.        ,
-         0.5       ,  13.43520833,   0.62325   ,   0.        ,
-        73.25      ])
 ```
 
 ## Documentation
@@ -166,4 +158,4 @@ If you would like to cite this code in your work, please use the Chemistry of Ma
 
 ## Issues
 
-Please feel free to post (and reply to) any questions, comments, and legitimate concerns as issues on this GitHub page.
+Please feel free to post any questions or comments as issues on this GitHub page.
