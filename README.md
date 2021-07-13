@@ -41,9 +41,9 @@ Alternate chemical scales may be accessed via the "metric" argument, e.g.
 The `elmd()` method is overloaded to take two strings, with the choice of elemental metric taken from the first class.
 
 ```python
-> elmd = ElMD().elmd
+> elmd = ElMD(metric="magpie_sc").elmd
 > elmd("NaCl", "LiCl")
-0.5
+0.688539
 ```
 
 ## Elemental Similarity
@@ -52,28 +52,28 @@ You may use either traditional discrete scales or machine learnt representations
 Due to the disparity in magnitudes of some of these values, a select few have additionally been scaled.
 
 Linear:
-- mendeleev
-- petti
-- atomic
-- mod_petti
+- [mendeleev](https://www.sciencedirect.com/science/article/abs/pii/S0925838803008004)
+- [petti](https://www.sciencedirect.com/science/article/abs/pii/S0925838803008004)
+- [atomic](https://www.sciencedirect.com/science/article/abs/pii/S0925838803008004)
+- [mod_petti](https://iopscience.iop.org/article/10.1088/1367-2630/18/9/093011/meta)
 
 Chemically Derived:
-- oliynyk 
-- oliynyk_sc
-- jarvis 
-- jarvis_sc 
-- magpie 
-- magpie_sc 
+- [oliynyk](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
+- [oliynyk_sc](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
+- [jarvis](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
+- [jarvis_sc](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
+- [magpie](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
+- [magpie_sc](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
 
 Machine Learnt:
-- cgcnn 
-- elemnet 
-- mat2vec 
-- matscholar 
-- megnet16 
+- [cgcnn](https://github.com/CompRhys/roost/tree/master/data/embeddings)
+- [elemnet](https://github.com/CompRhys/roost/tree/master/data/embeddings)
+- [mat2vec](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
+- [matscholar](https://github.com/CompRhys/roost/tree/master/data/embeddings)
+- [megnet16](https://github.com/CompRhys/roost/tree/master/data/embeddings)
 
 Random Numbers:
-- random_200
+- random_200](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
 
 TODO HYPERLINK REFERENCES FOR DESCRIPTORS, MOSTLY FROM ROOST AND CRABNET.
 
