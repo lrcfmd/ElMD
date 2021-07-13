@@ -9,7 +9,7 @@ setup(
   author = 'Cameron Hagreaves',            
   author_email = 'cameron.h@rgreaves.me.uk', 
   url = 'https://github.com/lrcfmd/ElMD/',   
-  download_url = 'https://github.com/lrcfmd/ElMD/archive/v0.3.9.tar.gz',    
+  download_url = 'https://github.com/lrcfmd/ElMD/archive/v0.3.11.tar.gz',    
   keywords = ['ChemInformatics', 'Materials Science', 'Machine Learning', 'Materials Representation'],  
   package_data={"elementFeatures": ["ElementDict.json"]}, 
   include_package_data=True,
