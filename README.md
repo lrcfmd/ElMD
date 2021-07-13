@@ -73,9 +73,7 @@ Machine Learnt:
 - [megnet16](https://github.com/CompRhys/roost/tree/master/data/embeddings)
 
 Random Numbers:
-- random_200](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
-
-TODO HYPERLINK REFERENCES FOR DESCRIPTORS, MOSTLY FROM ROOST AND CRABNET.
+- [random_200](https://github.com/anthony-wang/CrabNet/tree/master/data/element_properties)
 
 The Euclidean distance between these vectors is taken as the measure of elemental similarity. 
 
