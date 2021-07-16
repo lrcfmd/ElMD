@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.3.0"
+__version__ = "0.3.12"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -41,7 +41,7 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
-    x = ElMD("NaCl", metric="mod_petti")
+    x = ElMD("Fe htq")
     print(x.feature_vector)
     print(x.elmd("LiCl"))
     x = ElMD("Li7La3Hf2O12", metric="jarvis_sc")
@@ -54,19 +54,12 @@ def main():
     print(x)
     print(x.feature_vector)
 
-    elmd = ElMD().elmd
-    print("fine")
-    print(elmd("Zr3AlN", "CaTiO3"))
-
-    print(x.periodic_tab.keys())
-
 def EMD(comp1, comp2, lookup, table):
     '''
     A numba compiled EMD function to compare two sets of labels an associated 
     element feature matrix, and lookup table to map elements to indices, and 
     return the associated EMD.
     '''
-    
     if type(comp1) is str:
         source_demands = ElMD(comp1).ratio_vector
     else:
@@ -98,19 +91,23 @@ class ElMD():
     # all floats to capture the decimal places
     FP_MULTIPLIER = 100000000
 
-    def __init__(self, formula="", metric="mod_petti", feature_pooling="agg"):
+    def __init__(self, formula="", metric="mod_petti", feature_pooling="agg", strict_parsing=False):
         self.metric = metric
-        self.formula = ''.join(formula.split()) # Remove all whitespace
+        self.formula = formula.strip()
         self.periodic_tab = self._get_periodic_tab()
         self.lookup = self._gen_lookup()
+        self.petti_lookup = self._gen_petti_lookup()
 
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
         self.ratio_vector = self._gen_ratio_vector()
+        self.petti_vector = self._gen_petti_vector()
 
         self.feature_pooling = feature_pooling
         self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
+
+        self.strict_parsing = strict_parsing
 
     def elmd(self, comp2 = None, comp1 = None, verbose=False):
         '''
@@ -160,9 +157,36 @@ class ElMD():
 
         return numeric
 
+    def _gen_petti_vector(self):
+        comp = self.normed_composition
+        
+        if isinstance(comp, str):
+            comp = self._parse_formula(comp)
+            comp = self._normalise_composition(comp)
+
+        comp_labels = []
+        comp_ratios = []
+
+        for k in sorted(comp.keys()):
+            comp_labels.append(self.petti_lookup[k])
+            comp_ratios.append(comp[k])
+
+        indices = np.array(comp_labels, dtype=np.int64)
+        ratios = np.array(comp_ratios, dtype=np.float64)
+
+        numeric = np.zeros(shape=103, dtype=np.float64)
+        numeric[indices] = ratios
+
+        return numeric
+        
+
     def _gen_feature_vector(self):
+        """
+        Perform the dot product between the ratio vector and its elemental representation. 
+        """
         n = int(len(self.lookup) / 2)
 
+        # If we only have an integer representation, return the vector as is
         if type(self.periodic_tab[self.metric]["H"]) is int:
             return self.ratio_vector
         
@@ -191,14 +215,14 @@ class ElMD():
         '''
         Return a normalized formula string from the vector format
         '''
-        inds = np.where(self.ratio_vector != 0.0)[0]
+        inds = np.where(self.petti_vector != 0.0)[0]
         pretty_form = ""
 
         for i, ind in enumerate(inds):
-            if self.ratio_vector[ind] == 1:
-                pretty_form = pretty_form + f"{self.lookup[ind]}"
+            if self.petti_vector[ind] == 1:
+                pretty_form = pretty_form + f"{self.petti_lookup[ind]}"
             else:
-                pretty_form = pretty_form + f"{self.lookup[ind]}{self.ratio_vector[ind]:.3f}".strip('0') + ' '
+                pretty_form = pretty_form + f"{self.petti_lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
 
@@ -207,6 +231,7 @@ class ElMD():
         Load periodic data from the python site_packages/ElMD folder
         """
         paths = getsitepackages()
+
         for p in paths:
             try:
                 if "ElMD" in os.listdir(p):
@@ -313,9 +338,12 @@ class ElMD():
         try:
             np.array(self.periodic_tab[self.metric][element])
         except Exception as e:
-            raise Exception(f"Element, {element} not found in lookup dict {self.metric}, in composition {self.formula}")
+            if self.strict_parsing:
+                raise Exception(f"Element, {element} not found in lookup dict {self.metric}, in composition {self.formula}")
+            else:
+                return 0
 
-    def _get_position(self, element, metric=None):
+    def _get_position(self, element):
         """
         Return either the x, y coordinate of an elements position, or the
         x-coordinate on the Pettifor numbering system as a 2-dimensional
@@ -326,16 +354,18 @@ class ElMD():
             atomic_num = keys.index(element)
             return atomic_num
 
-        # If this fails for any reason return -1
         except:
-            return -1
+            if self.strict_parsing:
+                raise KeyError(f"One of the elements in {self.composition} is not in the {self.metric} dictionary. Try a different representation or use silent=False")
+            else:
+                return -1
 
     def _return_positions(self, composition):
         """ Return a dictionary of associated positions for each element """
         element_pos = {}
 
         for element in composition:
-            element_pos[element] = self._get_position(element, metric="manhattan")
+            element_pos[element] = self._get_position(element)
 
         return element_pos
 
@@ -347,6 +377,53 @@ class ElMD():
 
     def __eq__(self, other):
         return self.pretty_formula == other.pretty_formula
+
+    def _gen_petti_lookup(self):
+        return {"D": 102, "T": 102, "H": 102, 102: "H", 
+                0: "He", "He": 0, 11: "Li", "Li": 11, 76: "Be", 
+                "Be": 76, 85: "B", "B": 85, 86: "C", "C": 86, 
+                87: "N", "N": 87, 96: "O", "O": 96, 101: "F", 
+                "F": 101, 1: "Ne", "Ne": 1, 10: "Na", "Na": 10, 
+                72: "Mg", "Mg": 72, 77: "Al", "Al": 77, 84: "Si", 
+                "Si": 84, 88: "P", "P": 88, 95: "S", "S": 95, 
+                100: "Cl", "Cl": 100, 2: "Ar", "Ar": 2, 9: "K", 
+                "K": 9, 15: "Ca", "Ca": 15, 47: "Sc", "Sc": 47, 
+                50: "Ti", "Ti": 50, 53: "V", "V": 53, 54: "Cr", 
+                "Cr": 54, 71: "Mn", "Mn": 71, 70: "Fe", "Fe": 70, 
+                69: "Co", "Co": 69, 68: "Ni", "Ni": 68, 67: "Cu", 
+                "Cu": 67, 73: "Zn", "Zn": 73, 78: "Ga", "Ga": 78, 
+                83: "Ge", "Ge": 83, 89: "As", "As": 89, 94: "Se", 
+                "Se": 94, 99: "Br", "Br": 99, 3: "Kr", "Kr": 3, 
+                8: "Rb", "Rb": 8, 14: "Sr", "Sr": 14, 20: "Y", 
+                "Y": 20, 48: "Zr", "Zr": 48, 52: "Nb", "Nb": 52, 
+                55: "Mo", "Mo": 55, 58: "Tc", "Tc": 58, 60: "Ru", 
+                "Ru": 60, 62: "Rh", "Rh": 62, 64: "Pd", "Pd": 64, 
+                66: "Ag", "Ag": 66, 74: "Cd", "Cd": 74, 79: "In", 
+                "In": 79, 82: "Sn", "Sn": 82, 90: "Sb", "Sb": 90, 
+                93: "Te", "Te": 93, 98: "I", "I": 98, 4: "Xe", 
+                "Xe": 4, 7: "Cs", "Cs": 7, 13: "Ba", "Ba": 13, 
+                31: "La", "La": 31, 30: "Ce", "Ce": 30, 29: "Pr", 
+                "Pr": 29, 28: "Nd", "Nd": 28, 27: "Pm", "Pm": 27, 
+                26: "Sm", "Sm": 26, 16: "Eu", "Eu": 16, 25: "Gd", 
+                "Gd": 25, 24: "Tb", "Tb": 24, 23: "Dy", "Dy": 23, 
+                22: "Ho", "Ho": 22, 21: "Er", "Er": 21, 19: "Tm", 
+                "Tm": 19, 17: "Yb", "Yb": 17, 18: "Lu", "Lu": 18, 
+                49: "Hf", "Hf": 49, 51: "Ta", "Ta": 51, 56: "W", 
+                "W": 56, 57: "Re", "Re": 57, 59: "Os", "Os": 59, 
+                61: "Ir", "Ir": 61, 63: "Pt", "Pt": 63, 65: "Au", 
+                "Au": 65, 75: "Hg", "Hg": 75, 80: "Tl", "Tl": 80, 
+                81: "Pb", "Pb": 81, 91: "Bi", "Bi": 91, 92: "Po", 
+                "Po": 92, 97: "At", "At": 97, 5: "Rn", "Rn": 5, 
+                6: "Fr", "Fr": 6, 12: "Ra", "Ra": 12, 32: "Ac", 
+                "Ac": 32, 33: "Th", "Th": 33, 34: "Pa", "Pa": 34, 
+                35: "U", "U": 35, 36: "Np", "Np": 36, 37: "Pu", 
+                "Pu": 37, 38: "Am", "Am": 38, 39: "Cm", "Cm": 39, 
+                40: "Bk", "Bk": 40, 41: "Cf", "Cf": 41, 42: "Es", 
+                "Es": 42, 43: "Fm", "Fm": 43, 44: "Md", "Md": 44, 
+                45: "No", "No": 45, 46: "Lr", "Lr": 46, "Rf": 0, 
+                "Db": 0, "Sg": 0, "Bh": 0, "Hs": 0, "Mt": 0, 
+                "Ds": 0, "Rg": 0, "Cn": 0, "Nh": 0, "Fl": 0, 
+                "Mc": 0, "Lv": 0, "Ts": 0, "Og": 0, "Uue": 0}
 
 '''
 This is an implementation of the network simplex algorithm for computing the
@@ -806,51 +883,7 @@ def network_simplex(source_demands, sink_demands, network_costs):
 
     return final[0]
 
-mod_petti_lookup = {"D": 102, "T": 102, "H": 102, 102: "H", 
-         0: "He", "He": 0, 11: "Li", "Li": 11, 76: "Be", 
-         "Be": 76, 85: "B", "B": 85, 86: "C", "C": 86, 
-         87: "N", "N": 87, 96: "O", "O": 96, 101: "F", 
-         "F": 101, 1: "Ne", "Ne": 1, 10: "Na", "Na": 10, 
-         72: "Mg", "Mg": 72, 77: "Al", "Al": 77, 84: "Si", 
-         "Si": 84, 88: "P", "P": 88, 95: "S", "S": 95, 
-         100: "Cl", "Cl": 100, 2: "Ar", "Ar": 2, 9: "K", 
-         "K": 9, 15: "Ca", "Ca": 15, 47: "Sc", "Sc": 47, 
-         50: "Ti", "Ti": 50, 53: "V", "V": 53, 54: "Cr", 
-         "Cr": 54, 71: "Mn", "Mn": 71, 70: "Fe", "Fe": 70, 
-         69: "Co", "Co": 69, 68: "Ni", "Ni": 68, 67: "Cu", 
-         "Cu": 67, 73: "Zn", "Zn": 73, 78: "Ga", "Ga": 78, 
-         83: "Ge", "Ge": 83, 89: "As", "As": 89, 94: "Se", 
-         "Se": 94, 99: "Br", "Br": 99, 3: "Kr", "Kr": 3, 
-         8: "Rb", "Rb": 8, 14: "Sr", "Sr": 14, 20: "Y", 
-         "Y": 20, 48: "Zr", "Zr": 48, 52: "Nb", "Nb": 52, 
-         55: "Mo", "Mo": 55, 58: "Tc", "Tc": 58, 60: "Ru", 
-         "Ru": 60, 62: "Rh", "Rh": 62, 64: "Pd", "Pd": 64, 
-         66: "Ag", "Ag": 66, 74: "Cd", "Cd": 74, 79: "In", 
-         "In": 79, 82: "Sn", "Sn": 82, 90: "Sb", "Sb": 90, 
-         93: "Te", "Te": 93, 98: "I", "I": 98, 4: "Xe", 
-         "Xe": 4, 7: "Cs", "Cs": 7, 13: "Ba", "Ba": 13, 
-         31: "La", "La": 31, 30: "Ce", "Ce": 30, 29: "Pr", 
-         "Pr": 29, 28: "Nd", "Nd": 28, 27: "Pm", "Pm": 27, 
-         26: "Sm", "Sm": 26, 16: "Eu", "Eu": 16, 25: "Gd", 
-         "Gd": 25, 24: "Tb", "Tb": 24, 23: "Dy", "Dy": 23, 
-         22: "Ho", "Ho": 22, 21: "Er", "Er": 21, 19: "Tm", 
-         "Tm": 19, 17: "Yb", "Yb": 17, 18: "Lu", "Lu": 18, 
-         49: "Hf", "Hf": 49, 51: "Ta", "Ta": 51, 56: "W", 
-         "W": 56, 57: "Re", "Re": 57, 59: "Os", "Os": 59, 
-         61: "Ir", "Ir": 61, 63: "Pt", "Pt": 63, 65: "Au", 
-         "Au": 65, 75: "Hg", "Hg": 75, 80: "Tl", "Tl": 80, 
-         81: "Pb", "Pb": 81, 91: "Bi", "Bi": 91, 92: "Po", 
-         "Po": 92, 97: "At", "At": 97, 5: "Rn", "Rn": 5, 
-         6: "Fr", "Fr": 6, 12: "Ra", "Ra": 12, 32: "Ac", 
-         "Ac": 32, 33: "Th", "Th": 33, 34: "Pa", "Pa": 34, 
-         35: "U", "U": 35, 36: "Np", "Np": 36, 37: "Pu", 
-         "Pu": 37, 38: "Am", "Am": 38, 39: "Cm", "Cm": 39, 
-         40: "Bk", "Bk": 40, 41: "Cf", "Cf": 41, 42: "Es", 
-         "Es": 42, 43: "Fm", "Fm": 43, 44: "Md", "Md": 44, 
-         45: "No", "No": 45, 46: "Lr", "Lr": 46, "Rf": 0, 
-         "Db": 0, "Sg": 0, "Bh": 0, "Hs": 0, "Mt": 0, 
-         "Ds": 0, "Rg": 0, "Cn": 0, "Nh": 0, "Fl": 0, 
-         "Mc": 0, "Lv": 0, "Ts": 0, "Og": 0, "Uue": 0}
+    
 
 if __name__ == "__main__":
     main()
