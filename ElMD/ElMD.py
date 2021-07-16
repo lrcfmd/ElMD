@@ -94,6 +94,8 @@ class ElMD():
     def __init__(self, formula="", metric="mod_petti", feature_pooling="agg", strict_parsing=False):
         self.metric = metric
         self.formula = formula.strip()
+        self.strict_parsing = strict_parsing
+        
         self.periodic_tab = self._get_periodic_tab()
         self.lookup = self._gen_lookup()
         self.petti_lookup = self._gen_petti_lookup()
@@ -107,7 +109,7 @@ class ElMD():
         self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
 
-        self.strict_parsing = strict_parsing
+        
 
     def elmd(self, comp2 = None, comp1 = None, verbose=False):
         '''
@@ -377,6 +379,15 @@ class ElMD():
 
     def __eq__(self, other):
         return self.pretty_formula == other.pretty_formula
+
+    def __ne__(self, other):
+        return self.pretty_formula != other.pretty_formula
+    
+    def __lt__(self, other):
+        return self.elmd("H") < other.elmd("H")
+
+    def __gt__(self, other):
+        return self.elmd("H") > other.elmd("H")
 
     def _gen_petti_lookup(self):
         return {"D": 102, "T": 102, "H": 102, 102: "H", 
