@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.3.12"
+__version__ = "0.3.15"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -41,7 +41,7 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
-    x = ElMD("Fe htq")
+    x = ElMD("CdAlxTe")
     print(x.feature_vector)
     print(x.elmd("LiCl"))
     x = ElMD("Li7La3Hf2O12", metric="jarvis_sc")
@@ -108,8 +108,6 @@ class ElMD():
         self.feature_pooling = feature_pooling
         self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
-
-        
 
     def elmd(self, comp2 = None, comp1 = None, verbose=False):
         '''
@@ -264,11 +262,16 @@ class ElMD():
     def _dictify(self, tuples):
         """Transform tuples of tuples to a dict of atoms."""
         res = dict()
+
         for atom, n in tuples:
+            if atom[-1].lower() == "x":
+                atom = atom[:-1]
             try:
-                res[atom] += float(n or 1)
+                if atom in self.lookup:
+                    res[atom] += float(n or 1)
             except KeyError:
                 res[atom] = float(n or 1)
+
         return res
 
     def _fuse(self, mol1, mol2, w=1):
