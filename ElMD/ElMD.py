@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.3.15"
+__version__ = "0.3.16"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -41,7 +41,9 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
-    x = ElMD("CdAlxTe")
+    x = ElMD("CdAlxTe R")
+    print(x.feature_vector)
+    x = ElMD("CdAlxTe R", strict_parsing=True)
     print(x.feature_vector)
     print(x.elmd("LiCl"))
     x = ElMD("Li7La3Hf2O12", metric="jarvis_sc")
@@ -269,8 +271,14 @@ class ElMD():
             try:
                 if atom in self.lookup:
                     res[atom] += float(n or 1)
+                elif self.strict_parsing:
+                    raise ValueError(f"The element {atom} in the composition {self.formula} is not in the lookup dictionary for {self.metric}")
+
             except KeyError:
                 res[atom] = float(n or 1)
+
+            except ValueError as e:
+                raise e
 
         return res
 
