@@ -46,6 +46,14 @@ The `elmd()` method is overloaded to take two strings, with the choice of elemen
 0.688539
 ```
 
+By default, if the composition is not well formed or one of the elements is not contained in the featurizing dictionary, the parser will attempt to silently derive the correct chemical makeup. This may introduce errors for particularly esoteric formulae. If this is a concern the parser can be made to throw an exception with `strict_parsing=True`.
+
+```python
+> x = ElMD("LixMgx(PO4)3 hp") # Will be parsed as LiMg(PO4)3
+> x = ElMD("LixMgx(PO4)3 hp", strict_parsing=True) 
+ValueError: The element Lix in the composition LixMgx(PO4)3 hex is not in the lookup dictionary for mod_petti
+```
+
 ## Elemental Similarity
 You may use either traditional discrete scales or machine learnt representations for each element. In this instance a vector has been generated for each element, and the distance between elements (not compositions!) is the Euclidean distance. 
 
