@@ -6,7 +6,7 @@ Copyright (C) 2020 Cameron Hargreaves
 This file is part of The Element Movers Distance
 <https://github.com/lrcfmd/ElMD>
 
-The Element Movers Distance is free software: you can redistribute it and/or 
+The Element Movers Distance is free software: you can redistribute it and/or
 modify it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
 (at your option) any later version.
@@ -27,9 +27,9 @@ __version__ = "0.3.16"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
-import json 
+import json
 import re
-import os 
+import os
 import pkg_resources
 
 from site import getsitepackages
@@ -58,8 +58,8 @@ def main():
 
 def EMD(comp1, comp2, lookup, table):
     '''
-    A numba compiled EMD function to compare two sets of labels an associated 
-    element feature matrix, and lookup table to map elements to indices, and 
+    A numba compiled EMD function to compare two sets of labels an associated
+    element feature matrix, and lookup table to map elements to indices, and
     return the associated EMD.
     '''
     if type(comp1) is str:
@@ -76,11 +76,11 @@ def EMD(comp1, comp2, lookup, table):
 
     source_labels = np.array([table[lookup[i]] for i in np.where(source_demands > 0)[0]])
     sink_labels = np.array([table[lookup[i]] for i in np.where(sink_demands > 0)[0]])
-    
+
     source_demands = source_demands[np.where(source_demands > 0)[0]]
     sink_demands = sink_demands[np.where(sink_demands > 0)[0]]
 
-    network_costs = np.array([np.linalg.norm(x - y) * 1000000 for x in source_labels for y in sink_labels], dtype=np.int64) 
+    network_costs = np.array([np.linalg.norm(x - y) * 1000000 for x in source_labels for y in sink_labels], dtype=np.int64)
 
     return network_simplex(source_demands, sink_demands, network_costs)
 
@@ -97,7 +97,7 @@ class ElMD():
         self.metric = metric
         self.formula = formula.strip()
         self.strict_parsing = strict_parsing
-        
+
         self.periodic_tab = self._get_periodic_tab()
         self.lookup = self._gen_lookup()
         self.petti_lookup = self._gen_petti_lookup()
@@ -117,7 +117,7 @@ class ElMD():
         network simplex method. This is overloaded to accept a range of input
         types.
         '''
-        if comp1 == None:
+        if np.any(comp1 == None):
             comp1 = self.ratio_vector
 
         if isinstance(comp1, str):
@@ -136,10 +136,10 @@ class ElMD():
 
     def _gen_ratio_vector(self):
         '''
-        Create a numpy array from a composition dictionary. 
+        Create a numpy array from a composition dictionary.
         '''
         comp = self.normed_composition
-        
+
         if isinstance(comp, str):
             comp = self._parse_formula(comp)
             comp = self._normalise_composition(comp)
@@ -161,7 +161,7 @@ class ElMD():
 
     def _gen_petti_vector(self):
         comp = self.normed_composition
-        
+
         if isinstance(comp, str):
             comp = self._parse_formula(comp)
             comp = self._normalise_composition(comp)
@@ -180,18 +180,18 @@ class ElMD():
         numeric[indices] = ratios
 
         return numeric
-        
+
 
     def _gen_feature_vector(self):
         """
-        Perform the dot product between the ratio vector and its elemental representation. 
+        Perform the dot product between the ratio vector and its elemental representation.
         """
         n = int(len(self.lookup) / 2)
 
         # If we only have an integer representation, return the vector as is
         if type(self.periodic_tab[self.metric]["H"]) is int:
             return self.ratio_vector
-        
+
         m = len(self.periodic_tab[self.metric]["H"])
         numeric = np.zeros(shape=(n, m), dtype=float)
 
@@ -210,7 +210,7 @@ class ElMD():
         if self.feature_pooling == "mean":
             np.seterr(divide='ignore', invalid='ignore')
             weighted_vector = weighted_vector / len(self.normed_composition)
-        
+
         return weighted_vector
 
     def _gen_pretty(self):
@@ -239,19 +239,19 @@ class ElMD():
                 if "ElMD" in os.listdir(p):
                     python_package_path = p
             except:
-                pass 
+                pass
 
         with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
             ElementDict = json.loads(j.read())
-        
+
         return ElementDict
 
     def _gen_lookup(self):
         lookup = {}
-        
+
         for i, (k, v) in enumerate(self.periodic_tab[self.metric].items()):
             lookup[k] = i
-            lookup[i] = k 
+            lookup[i] = k
 
         return lookup
 
@@ -393,7 +393,7 @@ class ElMD():
 
     def __ne__(self, other):
         return self.pretty_formula != other.pretty_formula
-    
+
     def __lt__(self, other):
         return self.elmd("H") < other.elmd("H")
 
@@ -401,50 +401,50 @@ class ElMD():
         return self.elmd("H") > other.elmd("H")
 
     def _gen_petti_lookup(self):
-        return {"D": 102, "T": 102, "H": 102, 102: "H", 
-                0: "He", "He": 0, 11: "Li", "Li": 11, 76: "Be", 
-                "Be": 76, 85: "B", "B": 85, 86: "C", "C": 86, 
-                87: "N", "N": 87, 96: "O", "O": 96, 101: "F", 
-                "F": 101, 1: "Ne", "Ne": 1, 10: "Na", "Na": 10, 
-                72: "Mg", "Mg": 72, 77: "Al", "Al": 77, 84: "Si", 
-                "Si": 84, 88: "P", "P": 88, 95: "S", "S": 95, 
-                100: "Cl", "Cl": 100, 2: "Ar", "Ar": 2, 9: "K", 
-                "K": 9, 15: "Ca", "Ca": 15, 47: "Sc", "Sc": 47, 
-                50: "Ti", "Ti": 50, 53: "V", "V": 53, 54: "Cr", 
-                "Cr": 54, 71: "Mn", "Mn": 71, 70: "Fe", "Fe": 70, 
-                69: "Co", "Co": 69, 68: "Ni", "Ni": 68, 67: "Cu", 
-                "Cu": 67, 73: "Zn", "Zn": 73, 78: "Ga", "Ga": 78, 
-                83: "Ge", "Ge": 83, 89: "As", "As": 89, 94: "Se", 
-                "Se": 94, 99: "Br", "Br": 99, 3: "Kr", "Kr": 3, 
-                8: "Rb", "Rb": 8, 14: "Sr", "Sr": 14, 20: "Y", 
-                "Y": 20, 48: "Zr", "Zr": 48, 52: "Nb", "Nb": 52, 
-                55: "Mo", "Mo": 55, 58: "Tc", "Tc": 58, 60: "Ru", 
-                "Ru": 60, 62: "Rh", "Rh": 62, 64: "Pd", "Pd": 64, 
-                66: "Ag", "Ag": 66, 74: "Cd", "Cd": 74, 79: "In", 
-                "In": 79, 82: "Sn", "Sn": 82, 90: "Sb", "Sb": 90, 
-                93: "Te", "Te": 93, 98: "I", "I": 98, 4: "Xe", 
-                "Xe": 4, 7: "Cs", "Cs": 7, 13: "Ba", "Ba": 13, 
-                31: "La", "La": 31, 30: "Ce", "Ce": 30, 29: "Pr", 
-                "Pr": 29, 28: "Nd", "Nd": 28, 27: "Pm", "Pm": 27, 
-                26: "Sm", "Sm": 26, 16: "Eu", "Eu": 16, 25: "Gd", 
-                "Gd": 25, 24: "Tb", "Tb": 24, 23: "Dy", "Dy": 23, 
-                22: "Ho", "Ho": 22, 21: "Er", "Er": 21, 19: "Tm", 
-                "Tm": 19, 17: "Yb", "Yb": 17, 18: "Lu", "Lu": 18, 
-                49: "Hf", "Hf": 49, 51: "Ta", "Ta": 51, 56: "W", 
-                "W": 56, 57: "Re", "Re": 57, 59: "Os", "Os": 59, 
-                61: "Ir", "Ir": 61, 63: "Pt", "Pt": 63, 65: "Au", 
-                "Au": 65, 75: "Hg", "Hg": 75, 80: "Tl", "Tl": 80, 
-                81: "Pb", "Pb": 81, 91: "Bi", "Bi": 91, 92: "Po", 
-                "Po": 92, 97: "At", "At": 97, 5: "Rn", "Rn": 5, 
-                6: "Fr", "Fr": 6, 12: "Ra", "Ra": 12, 32: "Ac", 
-                "Ac": 32, 33: "Th", "Th": 33, 34: "Pa", "Pa": 34, 
-                35: "U", "U": 35, 36: "Np", "Np": 36, 37: "Pu", 
-                "Pu": 37, 38: "Am", "Am": 38, 39: "Cm", "Cm": 39, 
-                40: "Bk", "Bk": 40, 41: "Cf", "Cf": 41, 42: "Es", 
-                "Es": 42, 43: "Fm", "Fm": 43, 44: "Md", "Md": 44, 
-                45: "No", "No": 45, 46: "Lr", "Lr": 46, "Rf": 0, 
-                "Db": 0, "Sg": 0, "Bh": 0, "Hs": 0, "Mt": 0, 
-                "Ds": 0, "Rg": 0, "Cn": 0, "Nh": 0, "Fl": 0, 
+        return {"D": 102, "T": 102, "H": 102, 102: "H",
+                0: "He", "He": 0, 11: "Li", "Li": 11, 76: "Be",
+                "Be": 76, 85: "B", "B": 85, 86: "C", "C": 86,
+                87: "N", "N": 87, 96: "O", "O": 96, 101: "F",
+                "F": 101, 1: "Ne", "Ne": 1, 10: "Na", "Na": 10,
+                72: "Mg", "Mg": 72, 77: "Al", "Al": 77, 84: "Si",
+                "Si": 84, 88: "P", "P": 88, 95: "S", "S": 95,
+                100: "Cl", "Cl": 100, 2: "Ar", "Ar": 2, 9: "K",
+                "K": 9, 15: "Ca", "Ca": 15, 47: "Sc", "Sc": 47,
+                50: "Ti", "Ti": 50, 53: "V", "V": 53, 54: "Cr",
+                "Cr": 54, 71: "Mn", "Mn": 71, 70: "Fe", "Fe": 70,
+                69: "Co", "Co": 69, 68: "Ni", "Ni": 68, 67: "Cu",
+                "Cu": 67, 73: "Zn", "Zn": 73, 78: "Ga", "Ga": 78,
+                83: "Ge", "Ge": 83, 89: "As", "As": 89, 94: "Se",
+                "Se": 94, 99: "Br", "Br": 99, 3: "Kr", "Kr": 3,
+                8: "Rb", "Rb": 8, 14: "Sr", "Sr": 14, 20: "Y",
+                "Y": 20, 48: "Zr", "Zr": 48, 52: "Nb", "Nb": 52,
+                55: "Mo", "Mo": 55, 58: "Tc", "Tc": 58, 60: "Ru",
+                "Ru": 60, 62: "Rh", "Rh": 62, 64: "Pd", "Pd": 64,
+                66: "Ag", "Ag": 66, 74: "Cd", "Cd": 74, 79: "In",
+                "In": 79, 82: "Sn", "Sn": 82, 90: "Sb", "Sb": 90,
+                93: "Te", "Te": 93, 98: "I", "I": 98, 4: "Xe",
+                "Xe": 4, 7: "Cs", "Cs": 7, 13: "Ba", "Ba": 13,
+                31: "La", "La": 31, 30: "Ce", "Ce": 30, 29: "Pr",
+                "Pr": 29, 28: "Nd", "Nd": 28, 27: "Pm", "Pm": 27,
+                26: "Sm", "Sm": 26, 16: "Eu", "Eu": 16, 25: "Gd",
+                "Gd": 25, 24: "Tb", "Tb": 24, 23: "Dy", "Dy": 23,
+                22: "Ho", "Ho": 22, 21: "Er", "Er": 21, 19: "Tm",
+                "Tm": 19, 17: "Yb", "Yb": 17, 18: "Lu", "Lu": 18,
+                49: "Hf", "Hf": 49, 51: "Ta", "Ta": 51, 56: "W",
+                "W": 56, 57: "Re", "Re": 57, 59: "Os", "Os": 59,
+                61: "Ir", "Ir": 61, 63: "Pt", "Pt": 63, 65: "Au",
+                "Au": 65, 75: "Hg", "Hg": 75, 80: "Tl", "Tl": 80,
+                81: "Pb", "Pb": 81, 91: "Bi", "Bi": 91, 92: "Po",
+                "Po": 92, 97: "At", "At": 97, 5: "Rn", "Rn": 5,
+                6: "Fr", "Fr": 6, 12: "Ra", "Ra": 12, 32: "Ac",
+                "Ac": 32, 33: "Th", "Th": 33, 34: "Pa", "Pa": 34,
+                35: "U", "U": 35, 36: "Np", "Np": 36, 37: "Pu",
+                "Pu": 37, 38: "Am", "Am": 38, 39: "Cm", "Cm": 39,
+                40: "Bk", "Bk": 40, 41: "Cf", "Cf": 41, 42: "Es",
+                "Es": 42, 43: "Fm", "Fm": 43, 44: "Md", "Md": 44,
+                45: "No", "No": 45, 46: "Lr", "Lr": 46, "Rf": 0,
+                "Db": 0, "Sg": 0, "Bh": 0, "Hs": 0, "Mt": 0,
+                "Ds": 0, "Rg": 0, "Cn": 0, "Nh": 0, "Fl": 0,
                 "Mc": 0, "Lv": 0, "Ts": 0, "Og": 0, "Uue": 0}
 
 '''
@@ -900,12 +900,12 @@ def network_simplex(source_demands, sink_demands, network_costs):
     for arc_ind, flow in np.ndenumerate(final_flows):
         flow_cost += flow * edge_costs[arc_ind]
 
-    final = flow_cost / fp_multiplier 
-    final = final / fp_multiplier 
+    final = flow_cost / fp_multiplier
+    final = final / fp_multiplier
 
     return final[0]
 
-    
+
 
 if __name__ == "__main__":
     main()
