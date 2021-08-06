@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.3.16"
+__version__ = "0.3.17"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -41,6 +41,9 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
+    # x = ElMD("LixMgxTi2-xAl4+x(PO4)3 hp")
+    x = ElMD("LixMgxTi2-xAl400+x(PO4)3 Lex hex", x=2)
+    print(x.feature_vector)
     x = ElMD("CdAlxTe R")
     print(x.feature_vector)
     x = ElMD("CdAlxTe R", strict_parsing=True)
@@ -80,12 +83,13 @@ def EMD(comp1, comp2, lookup, table):
     source_demands = source_demands[np.where(source_demands > 0)[0]]
     sink_demands = sink_demands[np.where(sink_demands > 0)[0]]
 
+    # Perform a floating point conversion
     network_costs = np.array([np.linalg.norm(x - y) * 1000000 for x in source_labels for y in sink_labels], dtype=np.int64) 
 
     return network_simplex(source_demands, sink_demands, network_costs)
 
 class ElMD():
-    ATOM_REGEX = '([A-Z][a-z]*)(\d*\.*\d*)'
+    ATOM_REGEX = '([A-Z][a-z]*)(\d*\.?\d*[-+]?x?)'
     OPENERS = '({['
     CLOSERS = ')}]'
 
@@ -93,10 +97,11 @@ class ElMD():
     # all floats to capture the decimal places
     FP_MULTIPLIER = 100000000
 
-    def __init__(self, formula="", metric="mod_petti", feature_pooling="agg", strict_parsing=False):
+    def __init__(self, formula="", metric="mod_petti", feature_pooling="agg", strict_parsing=False, x=1):
         self.metric = metric
         self.formula = formula.strip()
         self.strict_parsing = strict_parsing
+        self.x = x
         
         self.periodic_tab = self._get_periodic_tab()
         self.lookup = self._gen_lookup()
@@ -267,7 +272,19 @@ class ElMD():
 
         for atom, n in tuples:
             if atom[-1].lower() == "x":
-                atom = atom[:-1]
+                if self.strict_parsing:
+                    raise ValueError(f"The element {atom} in the composition {self.formula} is undefined. Set strict_parsing=False to read x=1.")
+                else:
+                    atom = atom[:-1]
+                    n = self.x
+            
+            if not isinstance(n, (int, float)) and "x" in n and "-" in n:
+                n = float(str.split(n, "-")[0]) - self.x 
+                if n < 0: n = 0
+
+            if not isinstance(n, (int, float)) and "x" in n and "+" in n:
+                n = float(str.split(n, "+")[0]) + self.x 
+            
             try:
                 if atom in self.lookup:
                     res[atom] += float(n or 1)
@@ -623,7 +640,7 @@ def find_leaving_edge(cycle_nodes, cycle_edges, capac, flows, tails, heads):
 
 @njit()
 def augment_flow(cycle_nodes, cycle_edges, f, tails, flows):
-    """Augment f units of flow along a cycle represented by Wn and cycle_edges.
+    """Augment f units of flow along a cycle representing Wn with cycle_edges.
     """
     for i, p in zip(cycle_edges, cycle_nodes):
         if tails[int(i)] == np.int64(p):
