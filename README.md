@@ -46,12 +46,11 @@ The `elmd()` method is overloaded to take two strings, with the choice of elemen
 0.688539
 ```
 
-By default, if the composition is not well formed or one of the elements is not contained in the featurizing dictionary, the parser will attempt to silently derive the correct chemical makeup. This may introduce errors for particularly esoteric formulae. If this is a concern the parser can be made to throw an exception with `strict_parsing=True`.
+The compositional parser can handle user defined values of `x` when this is applicable.
 
 ```python
-> x = ElMD("LixMgx(PO4)3 hp") # Will be parsed as LiMg(PO4)3
-> x = ElMD("LixMgx(PO4)3 hp", strict_parsing=True) 
-ValueError: The element Lix in the composition LixMgx(PO4)3 hex is not in the lookup dictionary for mod_petti
+latp_02 = ElMD("Li1+xAlxTi2-x(PO4)3", x=0.2) # Li1.2Al0.2Ti1.8(PO4)3
+latp_03 = ElMD("Li1+xAlxTi2-x(PO4)3", x=0.3) # Li1.3Al0.3Ti1.7(PO4)3
 ```
 
 ## Elemental Similarity
