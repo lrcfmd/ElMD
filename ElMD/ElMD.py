@@ -236,17 +236,19 @@ class ElMD():
         """
         Load periodic data from the python site_packages/ElMD folder
         """
-        paths = getsitepackages()
+        #paths = getsitepackages()
 
-        for p in paths:
-            try:
-                if "ElMD" in os.listdir(p):
-                    python_package_path = p
-            except:
-                pass
+        # for p in paths:
+        #     try:
+        #         if "ElMD" in os.listdir(p):
+        #             python_package_path = p
+        #     except:
+        #         pass
+        data = pkg_resources.resource_string(__name__, "ElementDict.json")
+        ElementDict =json.loads(data)
 
-        with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
-            ElementDict = json.loads(j.read())
+        # with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
+        #     ElementDict = json.loads(j.read())
 
         return ElementDict
 
