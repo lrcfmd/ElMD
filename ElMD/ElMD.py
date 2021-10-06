@@ -41,16 +41,8 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
-    # x = ElMD("LixMgxTi2-xAl4+x(PO4)3 hp")
-    x = ElMD("LixMgxTi2-xAl400+x(PO4)3 Lex hex", x=2)
-    print(x.feature_vector)
-    x = ElMD("CdAlxTe R")
-    print(x.feature_vector)
-    x = ElMD("CdAlxTe R", strict_parsing=True)
-    print(x.feature_vector)
-    print(x.elmd("LiCl"))
-    x = ElMD("Li7La3Hf2O12", metric="jarvis_sc")
-    y = ElMD("CsPbI3", metric="mod_petti")
+    x = ElMD("Li7La3Hf2O12", metric="mod_petti")
+    y = ElMD("CsPbI3", metric="jarvis")
     z = ElMD("Zr3AlN", metric="atomic")
 
     print(x.elmd(y))
@@ -103,9 +95,9 @@ class ElMD():
         self.strict_parsing = strict_parsing
         self.x = x
         
-        self.periodic_tab = self._get_periodic_tab()
+        self.periodic_tab = self._get_periodic_tab(metric)
         self.lookup = self._gen_lookup()
-        self.petti_lookup = self._gen_petti_lookup()
+        self.petti_lookup = self._get_periodic_tab("mod_petti")
 
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
@@ -137,7 +129,7 @@ class ElMD():
         if isinstance(comp2, ElMD):
             comp2 = ElMD(comp2.formula, metric=self.metric).ratio_vector
 
-        return EMD(comp1, comp2, self.lookup, self.periodic_tab[self.metric])
+        return EMD(comp1, comp2, self.lookup, self.periodic_tab)
 
     def _gen_ratio_vector(self):
         '''
@@ -159,7 +151,7 @@ class ElMD():
         indices = np.array(comp_labels, dtype=np.int64)
         ratios = np.array(comp_ratios, dtype=np.float64)
 
-        numeric = np.zeros(shape=len(self.periodic_tab[self.metric]), dtype=np.float64)
+        numeric = np.zeros(shape=len(self.periodic_tab), dtype=np.float64)
         numeric[indices] = ratios
 
         return numeric
@@ -194,17 +186,17 @@ class ElMD():
         n = int(len(self.lookup) / 2)
 
         # If we only have an integer representation, return the vector as is
-        if type(self.periodic_tab[self.metric]["H"]) is int:
+        if type(self.periodic_tab["H"]) is int:
             return self.ratio_vector
         
-        m = len(self.periodic_tab[self.metric]["H"])
+        m = len(self.periodic_tab["H"])
         numeric = np.zeros(shape=(n, m), dtype=float)
 
-        els = list(self.periodic_tab[self.metric].keys())
+        els = list(self.periodic_tab.keys())
 
         for i, k in enumerate(self.normed_composition.keys()):
             try:
-                numeric[self.lookup[k]] = self.periodic_tab[self.metric][k]
+                numeric[self.lookup[k]] = self.periodic_tab[k]
             except:
                 print(f"Failed to process {self.formula} with {self.metric} due to unknown element {k}, discarding this element.")
 
@@ -227,17 +219,19 @@ class ElMD():
 
         for i, ind in enumerate(inds):
             if self.petti_vector[ind] == 1:
-                pretty_form = pretty_form + f"{self.petti_lookup[ind]}"
+                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}"
             else:
-                pretty_form = pretty_form + f"{self.petti_lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
+                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
 
-    def _get_periodic_tab(self):
+    def _get_periodic_tab(self, metric):
         """
         Load periodic data from the python site_packages/ElMD folder
         """
         paths = getsitepackages()
+
+        python_package_path = ""
 
         for p in paths:
             try:
@@ -245,16 +239,20 @@ class ElMD():
                     python_package_path = p
             except:
                 pass 
-
-        with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
+            
+        
+        with open(os.path.join(python_package_path, "ElMD", "ElementDict.json"), 'r') as j:
             ElementDict = json.loads(j.read())
         
-        return ElementDict
+        if metric not in ElementDict:
+            raise KeyError(f"Not a valid metric, available metrics are {[x for x in ElementDict.keys()]}")
+        
+        return ElementDict[metric]
 
     def _gen_lookup(self):
         lookup = {}
         
-        for i, (k, v) in enumerate(self.periodic_tab[self.metric].items()):
+        for i, (k, v) in enumerate(self.periodic_tab.items()):
             lookup[k] = i
             lookup[i] = k 
 
@@ -366,7 +364,7 @@ class ElMD():
     def _get_atomic_num(self, element):
         """ Return atomic number from element """
         try:
-            np.array(self.periodic_tab[self.metric][element])
+            np.array(self.periodic_tab[element])
         except Exception as e:
             if self.strict_parsing:
                 raise Exception(f"Element, {element} not found in lookup dict {self.metric}, in composition {self.formula}")
@@ -378,7 +376,7 @@ class ElMD():
         Return either the x, y coordinate of an elements position, or the
         x-coordinate on the Pettifor numbering system as a 2-dimensional
         """
-        keys = list(self.periodic_tab[self.metric].keys())
+        keys = list(self.periodic_tab.keys())
 
         try:
             atomic_num = keys.index(element)
@@ -417,52 +415,6 @@ class ElMD():
     def __gt__(self, other):
         return self.elmd("H") > other.elmd("H")
 
-    def _gen_petti_lookup(self):
-        return {"D": 102, "T": 102, "H": 102, 102: "H", 
-                0: "He", "He": 0, 11: "Li", "Li": 11, 76: "Be", 
-                "Be": 76, 85: "B", "B": 85, 86: "C", "C": 86, 
-                87: "N", "N": 87, 96: "O", "O": 96, 101: "F", 
-                "F": 101, 1: "Ne", "Ne": 1, 10: "Na", "Na": 10, 
-                72: "Mg", "Mg": 72, 77: "Al", "Al": 77, 84: "Si", 
-                "Si": 84, 88: "P", "P": 88, 95: "S", "S": 95, 
-                100: "Cl", "Cl": 100, 2: "Ar", "Ar": 2, 9: "K", 
-                "K": 9, 15: "Ca", "Ca": 15, 47: "Sc", "Sc": 47, 
-                50: "Ti", "Ti": 50, 53: "V", "V": 53, 54: "Cr", 
-                "Cr": 54, 71: "Mn", "Mn": 71, 70: "Fe", "Fe": 70, 
-                69: "Co", "Co": 69, 68: "Ni", "Ni": 68, 67: "Cu", 
-                "Cu": 67, 73: "Zn", "Zn": 73, 78: "Ga", "Ga": 78, 
-                83: "Ge", "Ge": 83, 89: "As", "As": 89, 94: "Se", 
-                "Se": 94, 99: "Br", "Br": 99, 3: "Kr", "Kr": 3, 
-                8: "Rb", "Rb": 8, 14: "Sr", "Sr": 14, 20: "Y", 
-                "Y": 20, 48: "Zr", "Zr": 48, 52: "Nb", "Nb": 52, 
-                55: "Mo", "Mo": 55, 58: "Tc", "Tc": 58, 60: "Ru", 
-                "Ru": 60, 62: "Rh", "Rh": 62, 64: "Pd", "Pd": 64, 
-                66: "Ag", "Ag": 66, 74: "Cd", "Cd": 74, 79: "In", 
-                "In": 79, 82: "Sn", "Sn": 82, 90: "Sb", "Sb": 90, 
-                93: "Te", "Te": 93, 98: "I", "I": 98, 4: "Xe", 
-                "Xe": 4, 7: "Cs", "Cs": 7, 13: "Ba", "Ba": 13, 
-                31: "La", "La": 31, 30: "Ce", "Ce": 30, 29: "Pr", 
-                "Pr": 29, 28: "Nd", "Nd": 28, 27: "Pm", "Pm": 27, 
-                26: "Sm", "Sm": 26, 16: "Eu", "Eu": 16, 25: "Gd", 
-                "Gd": 25, 24: "Tb", "Tb": 24, 23: "Dy", "Dy": 23, 
-                22: "Ho", "Ho": 22, 21: "Er", "Er": 21, 19: "Tm", 
-                "Tm": 19, 17: "Yb", "Yb": 17, 18: "Lu", "Lu": 18, 
-                49: "Hf", "Hf": 49, 51: "Ta", "Ta": 51, 56: "W", 
-                "W": 56, 57: "Re", "Re": 57, 59: "Os", "Os": 59, 
-                61: "Ir", "Ir": 61, 63: "Pt", "Pt": 63, 65: "Au", 
-                "Au": 65, 75: "Hg", "Hg": 75, 80: "Tl", "Tl": 80, 
-                81: "Pb", "Pb": 81, 91: "Bi", "Bi": 91, 92: "Po", 
-                "Po": 92, 97: "At", "At": 97, 5: "Rn", "Rn": 5, 
-                6: "Fr", "Fr": 6, 12: "Ra", "Ra": 12, 32: "Ac", 
-                "Ac": 32, 33: "Th", "Th": 33, 34: "Pa", "Pa": 34, 
-                35: "U", "U": 35, 36: "Np", "Np": 36, 37: "Pu", 
-                "Pu": 37, 38: "Am", "Am": 38, 39: "Cm", "Cm": 39, 
-                40: "Bk", "Bk": 40, 41: "Cf", "Cf": 41, 42: "Es", 
-                "Es": 42, 43: "Fm", "Fm": 43, 44: "Md", "Md": 44, 
-                45: "No", "No": 45, 46: "Lr", "Lr": 46, "Rf": 0, 
-                "Db": 0, "Sg": 0, "Bh": 0, "Hs": 0, "Mt": 0, 
-                "Ds": 0, "Rg": 0, "Cn": 0, "Nh": 0, "Fl": 0, 
-                "Mc": 0, "Lv": 0, "Ts": 0, "Og": 0, "Uue": 0}
 
 '''
 This is an implementation of the network simplex algorithm for computing the
