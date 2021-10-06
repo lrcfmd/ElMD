@@ -240,7 +240,6 @@ class ElMD():
             except:
                 pass 
             
-        python_package_path = ""
         with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
             ElementDict = json.loads(j.read())
                 
