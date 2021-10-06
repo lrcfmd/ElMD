@@ -231,16 +231,18 @@ class ElMD():
         """
         paths = getsitepackages()
 
+        python_package_path = ""
+
         for p in paths:
             try:
                 if "ElMD" in os.listdir(p):
                     python_package_path = p
             except:
                 pass 
-        with open("ElMD/ElementDict.json", 'r') as j:
+            
+        
+        with open(os.path.join(python_package_path, "ElMD", "ElementDict.json"), 'r') as j:
             ElementDict = json.loads(j.read())
-        # with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
-        #     ElementDict = json.loads(j.read())
         
         if metric not in ElementDict:
             raise KeyError(f"Not a valid metric, available metrics are {[x for x in ElementDict.keys()]}")
