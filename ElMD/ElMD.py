@@ -41,16 +41,10 @@ from scipy.spatial.distance import squareform
 from numba import njit
 
 def main():
-    # x = ElMD("LixMgxTi2-xAl4+x(PO4)3 hp")
-    x = ElMD("LixMgxTi2-xAl400+x(PO4)3 Lex hex", x=2)
-    print(x.feature_vector)
-    x = ElMD("CdAlxTe R")
-    print(x.feature_vector)
-    x = ElMD("CdAlxTe R", strict_parsing=True)
-    print(x.feature_vector)
-    print(x.elmd("LiCl"))
-    x = ElMD("Li7La3Hf2O12", metric="jarvis_sc")
-    y = ElMD("CsPbI3", metric="mod_petti")
+    from time import time 
+    ts = time()
+    x = ElMD("Li7La3Hf2O12", metric="mod_petti")
+    y = ElMD("CsPbI3", metric="jarvis")
     z = ElMD("Zr3AlN", metric="atomic")
 
     print(x.elmd(y))
@@ -58,6 +52,7 @@ def main():
     print(y.elmd(z))
     print(x)
     print(x.feature_vector)
+    print(time() - ts)
 
 def EMD(comp1, comp2, lookup, table):
     '''
@@ -103,9 +98,9 @@ class ElMD():
         self.strict_parsing = strict_parsing
         self.x = x
         
-        self.periodic_tab = self._get_periodic_tab()
+        self.periodic_tab = self._get_periodic_tab(metric)
         self.lookup = self._gen_lookup()
-        self.petti_lookup = self._gen_petti_lookup()
+        self.petti_lookup = self._get_periodic_tab("mod_petti")
 
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
@@ -137,7 +132,7 @@ class ElMD():
         if isinstance(comp2, ElMD):
             comp2 = ElMD(comp2.formula, metric=self.metric).ratio_vector
 
-        return EMD(comp1, comp2, self.lookup, self.periodic_tab[self.metric])
+        return EMD(comp1, comp2, self.lookup, self.periodic_tab)
 
     def _gen_ratio_vector(self):
         '''
@@ -159,7 +154,7 @@ class ElMD():
         indices = np.array(comp_labels, dtype=np.int64)
         ratios = np.array(comp_ratios, dtype=np.float64)
 
-        numeric = np.zeros(shape=len(self.periodic_tab[self.metric]), dtype=np.float64)
+        numeric = np.zeros(shape=len(self.periodic_tab), dtype=np.float64)
         numeric[indices] = ratios
 
         return numeric
@@ -194,17 +189,17 @@ class ElMD():
         n = int(len(self.lookup) / 2)
 
         # If we only have an integer representation, return the vector as is
-        if type(self.periodic_tab[self.metric]["H"]) is int:
+        if type(self.periodic_tab["H"]) is int:
             return self.ratio_vector
         
-        m = len(self.periodic_tab[self.metric]["H"])
+        m = len(self.periodic_tab["H"])
         numeric = np.zeros(shape=(n, m), dtype=float)
 
-        els = list(self.periodic_tab[self.metric].keys())
+        els = list(self.periodic_tab.keys())
 
         for i, k in enumerate(self.normed_composition.keys()):
             try:
-                numeric[self.lookup[k]] = self.periodic_tab[self.metric][k]
+                numeric[self.lookup[k]] = self.periodic_tab[k]
             except:
                 print(f"Failed to process {self.formula} with {self.metric} due to unknown element {k}, discarding this element.")
 
@@ -227,13 +222,13 @@ class ElMD():
 
         for i, ind in enumerate(inds):
             if self.petti_vector[ind] == 1:
-                pretty_form = pretty_form + f"{self.petti_lookup[ind]}"
+                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}"
             else:
-                pretty_form = pretty_form + f"{self.petti_lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
+                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
 
-    def _get_periodic_tab(self):
+    def _get_periodic_tab(self, metric):
         """
         Load periodic data from the python site_packages/ElMD folder
         """
@@ -245,16 +240,20 @@ class ElMD():
                     python_package_path = p
             except:
                 pass 
-
-        with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
+        with open("ElMD/ElementDict.json", 'r') as j:
             ElementDict = json.loads(j.read())
+        # with open(python_package_path + "/ElMD/ElementDict.json", 'r') as j:
+        #     ElementDict = json.loads(j.read())
         
-        return ElementDict
+        if metric not in ElementDict:
+            raise KeyError(f"Not a valid metric, available metrics are {[x for x in ElementDict.keys()]}")
+        
+        return ElementDict[metric]
 
     def _gen_lookup(self):
         lookup = {}
         
-        for i, (k, v) in enumerate(self.periodic_tab[self.metric].items()):
+        for i, (k, v) in enumerate(self.periodic_tab.items()):
             lookup[k] = i
             lookup[i] = k 
 
@@ -366,7 +365,7 @@ class ElMD():
     def _get_atomic_num(self, element):
         """ Return atomic number from element """
         try:
-            np.array(self.periodic_tab[self.metric][element])
+            np.array(self.periodic_tab[element])
         except Exception as e:
             if self.strict_parsing:
                 raise Exception(f"Element, {element} not found in lookup dict {self.metric}, in composition {self.formula}")
@@ -378,7 +377,7 @@ class ElMD():
         Return either the x, y coordinate of an elements position, or the
         x-coordinate on the Pettifor numbering system as a 2-dimensional
         """
-        keys = list(self.periodic_tab[self.metric].keys())
+        keys = list(self.periodic_tab.keys())
 
         try:
             atomic_num = keys.index(element)
