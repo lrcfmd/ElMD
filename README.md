@@ -116,7 +116,7 @@ feature_vector = np.dot(ratio_vector, element_feature_matrix)
 This is accessed through the `feature_vector` attribute.
 
 ```python
-# For single element compositions, equivalent to x.periodic_tab["magpie"]["Cl"]
+# For single element compositions, equivalent to x.periodic_tab["Cl"]
 > x = ElMD("Cl", metric="magpie")
 > x.feature_vector
 array([ 94.    ,  35.453 , 171.6   ,  17.    ,   3.    , 102.    ,
