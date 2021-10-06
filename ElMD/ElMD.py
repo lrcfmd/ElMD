@@ -240,14 +240,11 @@ class ElMD():
             except:
                 pass 
             
-        
-        with open(os.path.join(python_package_path, "ElMD", "ElementDict.json"), 'r') as j:
+        python_package_path = ""
+        with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
             ElementDict = json.loads(j.read())
-        
-        if metric not in ElementDict:
-            raise KeyError(f"Not a valid metric, available metrics are {[x for x in ElementDict.keys()]}")
-        
-        return ElementDict[metric]
+                
+        return ElementDict
 
     def _gen_lookup(self):
         lookup = {}
@@ -426,7 +423,7 @@ All rights reserved.
 BSD license.
 '''
 
-@njit()
+@njit(cache=True)
 def reduced_cost(i, costs, potentials, tails, heads, flows):
     """Return the reduced cost of an edge i.
     """
@@ -437,7 +434,7 @@ def reduced_cost(i, costs, potentials, tails, heads, flows):
     else:
         return -c
 
-@njit()
+@njit(cache=True)
 def find_entering_edges(e, f, tails, heads, costs, potentials, flows):
     """Yield entering edges until none can be found.
     """
@@ -493,7 +490,7 @@ def find_entering_edges(e, f, tails, heads, costs, potentials, flows):
     # All edges have nonnegative reduced costs. The flow is optimal.
     return -1, -1, -1, -1
 
-@njit()
+@njit(cache=True)
 def find_apex(p, q, size, parent):
     """Find the lowest common ancestor of nodes p and q in the spanning
     tree.
@@ -517,7 +514,7 @@ def find_apex(p, q, size, parent):
             else:
                 return p
 
-@njit()
+@njit(cache=True)
 def trace_path(p, w, edge, parent):
     """Return the nodes and edges on the path from node p to its ancestor
     w.
@@ -532,7 +529,7 @@ def trace_path(p, w, edge, parent):
 
     return cycle_nodes, cycle_edges
 
-@njit()
+@njit(cache=True)
 def find_cycle(i, p, q, size, edge, parent):
     """Return the nodes and edges on the cycle containing edge i == (p, q)
     when the latter is added to the spanning tree.
@@ -557,7 +554,7 @@ def find_cycle(i, p, q, size, edge, parent):
 
     return cycle_nodes, cycle_edges
 
-@njit()
+@njit(cache=True)
 def residual_capacity(i, p, capac, flows, tails):
     """Return the residual capacity of an edge i in the direction away
     from its endpoint p.
@@ -568,7 +565,7 @@ def residual_capacity(i, p, capac, flows, tails):
     else:
         return flows[np.int64(i)]
 
-@njit()
+@njit(cache=True)
 def find_leaving_edge(cycle_nodes, cycle_edges, capac, flows, tails, heads):
     """Return the leaving edge in a cycle represented by cycle_nodes and
     cycle_edges.
@@ -590,7 +587,7 @@ def find_leaving_edge(cycle_nodes, cycle_edges, capac, flows, tails, heads):
     t = heads[np.int64(j)] if tails[np.int64(j)] == s else tails[np.int64(j)]
     return j, s, t
 
-@njit()
+@njit(cache=True)
 def augment_flow(cycle_nodes, cycle_edges, f, tails, flows):
     """Augment f units of flow along a cycle representing Wn with cycle_edges.
     """
@@ -600,7 +597,7 @@ def augment_flow(cycle_nodes, cycle_edges, f, tails, flows):
         else:
             flows[int(i)] -= f
 
-@njit()
+@njit(cache=True)
 def trace_subtree(p, last, next):
     """Yield the nodes in the subtree rooted at a node p.
     """
@@ -614,7 +611,7 @@ def trace_subtree(p, last, next):
 
     return np.array(tree, dtype=np.int64)
 
-@njit()
+@njit(cache=True)
 def remove_edge(s, t, size, prev, last, next, parent, edge):
     """Remove an edge (s, t) where parent[t] == s from the spanning tree.
     """
@@ -639,7 +636,7 @@ def remove_edge(s, t, size, prev, last, next, parent, edge):
             last[s] = prev_t
         s = parent[s]
 
-@njit()
+@njit(cache=True)
 def make_root(q, parent, size, last, prev, next, edge):
     """
     Make a node q the root of its containing subtree.
@@ -687,7 +684,7 @@ def make_root(q, parent, size, last, prev, next, edge):
         prev[q] = last_p
         last[q] = last_p
 
-@njit()
+@njit(cache=True)
 def add_edge(i, p, q, next, prev, last, size, parent, edge):
     """Add an edge (p, q) to the spanning tree where q is the root of a
     subtree.
@@ -713,7 +710,7 @@ def add_edge(i, p, q, next, prev, last, size, parent, edge):
             last[p] = last_q
         p = parent[p]
 
-@njit()
+@njit(cache=True)
 def update_potentials(i, p, q, heads, potentials, costs, last, next):
     """Update the potentials of the nodes in the subtree rooted at a node
     q connected to its parent p by an edge i.
@@ -727,7 +724,7 @@ def update_potentials(i, p, q, heads, potentials, costs, last, next):
     for q in tree:
         potentials[q] += d
 
-@njit()
+@njit(cache=True)
 def network_simplex(source_demands, sink_demands, network_costs):
     '''
     This is a port of the network simplex algorithm implented by Loïc Séguin-C
