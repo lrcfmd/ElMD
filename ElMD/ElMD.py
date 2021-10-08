@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.3.17"
+__version__ = "0.4.0"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -39,8 +39,11 @@ from copy import deepcopy
 import numpy as np
 from scipy.spatial.distance import squareform
 from numba import njit
+from functools import lru_cache
 
 def main():
+    import time 
+    ts = time.time()
     x = ElMD("Li7La3Hf2O12", metric="mod_petti")
     y = ElMD("CsPbI3", metric="jarvis")
     z = ElMD("Zr3AlN", metric="atomic")
@@ -50,7 +53,31 @@ def main():
     print(y.elmd(z))
     print(x)
     print(x.feature_vector)
+    print(time.time() - ts)
 
+@lru_cache(maxsize=8)
+def _get_periodic_tab(metric):
+    """
+    Load periodic data from the python site_packages/ElMD folder
+    """
+    paths = getsitepackages()
+
+    python_package_path = ""
+
+    for p in paths:
+        try:
+            if "ElMD" in os.listdir(p):
+                python_package_path = p
+        except:
+            pass 
+
+    python_package_path = "" # For local debugging
+
+    with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
+        ElementDict = json.loads(j.read())
+            
+    return ElementDict
+    
 def EMD(comp1, comp2, lookup, table):
     '''
     A numba compiled EMD function to compare two sets of labels an associated 
@@ -95,9 +122,9 @@ class ElMD():
         self.strict_parsing = strict_parsing
         self.x = x
         
-        self.periodic_tab = self._get_periodic_tab(metric)
+        self.periodic_tab = _get_periodic_tab(metric)
         self.lookup = self._gen_lookup()
-        self.petti_lookup = self._get_periodic_tab("mod_petti")
+        self.petti_lookup = _get_periodic_tab("mod_petti")
 
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
@@ -224,26 +251,6 @@ class ElMD():
                 pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
-
-    def _get_periodic_tab(self, metric):
-        """
-        Load periodic data from the python site_packages/ElMD folder
-        """
-        paths = getsitepackages()
-
-        python_package_path = ""
-
-        for p in paths:
-            try:
-                if "ElMD" in os.listdir(p):
-                    python_package_path = p
-            except:
-                pass 
-            
-        with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
-            ElementDict = json.loads(j.read())
-                
-        return ElementDict
 
     def _gen_lookup(self):
         lookup = {}
