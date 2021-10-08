@@ -71,7 +71,7 @@ def _get_periodic_tab(metric):
         except:
             pass 
 
-    python_package_path = "" # For local debugging
+    # python_package_path = "" # For local debugging
 
     with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
         ElementDict = json.loads(j.read())
