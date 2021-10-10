@@ -97,8 +97,8 @@ The Euclidean distance between these vectors is taken as the measure of elementa
 The feature dictionary can be accessed through the `periodic_tab` attribute:
 
 ```python
-> featurizingDict = ElMD().periodic_tab
-> featurizingDict["magpie"]["Na"]
+> featurizingDict = ElMD(metric="magpie).periodic_tab
+> featurizingDict["Na"]
 [2.0, 22.98976928, 370.87, 1.0, 3.0, 166.0, 0.93, 1.0, 0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 29.2433333333, 0.0, 0.0, 229.0]
 ```
 
@@ -116,7 +116,7 @@ feature_vector = np.dot(ratio_vector, element_feature_matrix)
 This is accessed through the `feature_vector` attribute.
 
 ```python
-# For single element compositions, equivalent to x.periodic_tab["magpie"]["Cl"]
+# For single element compositions, equivalent to x.periodic_tab["Cl"]
 > x = ElMD("Cl", metric="magpie")
 > x.feature_vector
 array([ 94.    ,  35.453 , 171.6   ,  17.    ,   3.    , 102.    ,
