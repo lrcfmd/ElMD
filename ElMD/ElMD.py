@@ -96,8 +96,8 @@ def EMD(comp1, comp2, lookup, table):
     else:
         sink_demands = comp2
 
-    source_labels = np.array([table[lookup[i]] for i in np.where(source_demands > 0)[0]])
-    sink_labels = np.array([table[lookup[i]] for i in np.where(sink_demands > 0)[0]])
+    source_labels = np.array([table[lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=int)
+    sink_labels = np.array([table[lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=int)
     
     source_demands = source_demands[np.where(source_demands > 0)[0]]
     sink_demands = sink_demands[np.where(sink_demands > 0)[0]]
