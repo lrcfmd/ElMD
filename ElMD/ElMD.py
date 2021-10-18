@@ -43,13 +43,33 @@ from functools import lru_cache
 
 def main():
     import time 
+    print(os.listdir())
+    root = "ElMD/ElMD/el_lookup/"
+    for p in os.listdir(root):
+        if p == "mod_petti":
+            continue
+        else:
+            with open(root + p) as f:
+                d = json.load(f)
+            print(d)
+
+
     ts = time.time()
-    x = ElMD("Li7La3Hf2O12", metric="magpie")
-    y = ElMD("CsPbI3", metric="magpie")
-    z = ElMD("Zr3AlN", metric="atomic")
+    x = ElMD("LiCl", metric="mod_petti")
+    y = ElMD("NaCl", metric="mod_petti")
+    # z = ElMD("Zr3AlN", metric="atomic")
 
     print(x.elmd(y))
     print(y.elmd(x))
+
+    x = ElMD("Li7La3Hf2O12", metric="magpie")
+    y = ElMD("CsPbI3", metric="magpie")
+    # z = ElMD("Zr3AlN", metric="atomic")
+
+    print(x.elmd(y))
+    print(y.elmd(x))
+
+
     print(y.elmd(z))
     print(x)
     print(x.feature_vector)
@@ -71,9 +91,9 @@ def _get_periodic_tab(metric):
         except:
             pass 
 
-    # python_package_path = "" # For local debugging
+    python_package_path = "" # For local debugging
 
-    with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
+    with open(os.path.join(python_package_path, "ElMD/ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
         ElementDict = json.loads(j.read())
             
     return ElementDict
@@ -100,8 +120,8 @@ def elmd(comp1, comp2, metric="mod_petti"):
     if isinstance(comp1, ElMD) and isinstance(comp2, ElMD) and comp1.metric != comp2.metric:
         raise TypeError(f"Both ElMD objects must use the same metric. comp1 has metric={comp1.metric} and comp2 has metric={comp2.metric}")
 
-    source_labels = np.array([comp1.periodic_tab[comp1.petti_lookup[str(i)]] for i in np.where(source_demands > 0)[0]], dtype=float)
-    sink_labels = np.array([comp2.periodic_tab[comp2.petti_lookup[str(i)]] for i in np.where(sink_demands > 0)[0]], dtype=float)
+    source_labels = np.array([comp1.periodic_tab[comp1.petti_lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=float)
+    sink_labels = np.array([comp2.periodic_tab[comp2.petti_lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=float)
     
     source_demands = source_demands[np.where(source_demands > 0)[0]]
     sink_demands = sink_demands[np.where(sink_demands > 0)[0]]
@@ -149,6 +169,7 @@ class ElMD():
         self.periodic_tab = _get_periodic_tab(metric)
         self.lookup = self._gen_lookup()
         self.petti_lookup = _get_periodic_tab("mod_petti")
+        self.petti_lookup = self.filter_petti_lookup()
 
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
@@ -158,6 +179,32 @@ class ElMD():
         self.feature_pooling = feature_pooling
         self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
+
+
+    def filter_petti_lookup(self):
+        # Remove any elements from the mod_petti dictionary that our absent from our lookup table
+        filtered_petti = {k: v for k, v in self.petti_lookup.items() if k in self.periodic_tab }
+
+        lookup = {k: v for k, v in filtered_petti.items() }
+
+        for k, v in filtered_petti.items():
+            lookup[v] = k
+
+        # Now reindex each of the values to create a linearly spaced scale for lookups
+        comps, vals = zip(*[(k, v) for k, v in filtered_petti.items()])
+        sorted_inds = np.argsort(vals)
+        
+        ret_dict = {}
+        
+        for i, orig_index in enumerate(sorted_inds):
+            ret_dict[comps[orig_index]] = i
+            ret_dict[i] = comps[orig_index]
+            
+    
+        return ret_dict
+
+
+
 
     def elmd(self, comp2 = None, comp1 = None):
         '''
@@ -190,7 +237,7 @@ class ElMD():
         indices = np.array(comp_labels, dtype=np.int64)
         ratios = np.array(comp_ratios, dtype=np.float64)
 
-        numeric = np.zeros(shape=max([int(x) for x in self.petti_lookup if x.isnumeric()]), dtype=np.float64)
+        numeric = np.zeros(shape=max([x for x in self.petti_lookup.values() if isinstance(x, int)]), dtype=np.float64)
         numeric[indices] = ratios
 
         return numeric
@@ -212,7 +259,7 @@ class ElMD():
         indices = np.array(comp_labels, dtype=np.int64)
         ratios = np.array(comp_ratios, dtype=np.float64)
 
-        numeric = np.zeros(shape=103, dtype=np.float64)
+        numeric = np.zeros(shape=len(self.petti_lookup), dtype=np.float64)
         numeric[indices] = ratios
 
         return numeric
@@ -222,7 +269,7 @@ class ElMD():
         """
         Perform the dot product between the ratio vector and its elemental representation. 
         """
-        n = int(len(self.lookup) / 2)
+        n = int(len(self.petti_lookup) / 2) - 1
 
         # If we only have an integer representation, return the vector as is
         if type(self.periodic_tab["H"]) is int:
@@ -235,7 +282,7 @@ class ElMD():
 
         for i, k in enumerate(self.normed_composition.keys()):
             try:
-                numeric[self.lookup[k]] = self.periodic_tab[k]
+                numeric[self.petti_lookup[k]] = self.periodic_tab[k]
             except:
                 print(f"Failed to process {self.formula} with {self.metric} due to unknown element {k}, discarding this element.")
 
@@ -258,9 +305,9 @@ class ElMD():
 
         for i, ind in enumerate(inds):
             if self.petti_vector[ind] == 1:
-                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}"
+                pretty_form = pretty_form + f"{self.petti_lookup[ind]}"
             else:
-                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
+                pretty_form = pretty_form + f"{self.petti_lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
 
