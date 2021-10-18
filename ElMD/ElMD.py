@@ -43,17 +43,6 @@ from functools import lru_cache
 
 def main():
     import time 
-    print(os.listdir())
-    root = "ElMD/ElMD/el_lookup/"
-    for p in os.listdir(root):
-        if p == "mod_petti":
-            continue
-        else:
-            with open(root + p) as f:
-                d = json.load(f)
-            print(d)
-
-
     ts = time.time()
     x = ElMD("LiCl", metric="mod_petti")
     y = ElMD("NaCl", metric="mod_petti")
@@ -91,9 +80,9 @@ def _get_periodic_tab(metric):
         except:
             pass 
 
-    python_package_path = "" # For local debugging
+    # python_package_path = "" # For local debugging
 
-    with open(os.path.join(python_package_path, "ElMD/ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
+    with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
         ElementDict = json.loads(j.read())
             
     return ElementDict
