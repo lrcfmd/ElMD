@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.6"
+__version__ = "0.4.7"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -42,17 +42,11 @@ from numba import njit
 from functools import lru_cache
 
 import pickle as pk
-from tqdm import tqdm 
 
 def main():
     import time 
 
-    comps = pk.load(open("ElMD/all_comps.pk", "rb"))
     ts = time.time()
-
-    all_c = []
-    for x in tqdm(comps):
-        all_c.append(ElMD(x, metric="mod_petti"))
     y = ElMD("C1 D12 Ca1 O9", metric="mod_petti")
     # z = ElMD("Zr3AlN", metric="atomic")
 
