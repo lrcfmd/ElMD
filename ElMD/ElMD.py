@@ -44,12 +44,21 @@ from functools import lru_cache
 def main():
     import time 
     ts = time.time()
-    x = ElMD("Li7La3Hf2O12", metric="mod_petti")
-    y = ElMD("CsPbI3", metric="jarvis")
-    z = ElMD("Zr3AlN", metric="atomic")
+    x = ElMD("LiCl", metric="mod_petti")
+    y = ElMD("NaCl", metric="mod_petti")
+    # z = ElMD("Zr3AlN", metric="atomic")
 
     print(x.elmd(y))
     print(y.elmd(x))
+
+    x = ElMD("Li7La3Hf2O12", metric="magpie")
+    y = ElMD("CsPbI3", metric="magpie")
+    # z = ElMD("Zr3AlN", metric="atomic")
+
+    print(x.elmd(y))
+    print(y.elmd(x))
+
+
     print(y.elmd(z))
     print(x)
     print(x.feature_vector)
@@ -78,32 +87,56 @@ def _get_periodic_tab(metric):
             
     return ElementDict
     
-def EMD(comp1, comp2, lookup, table):
-    '''
-    A numba compiled EMD function to compare two sets of labels an associated 
-    element feature matrix, and lookup table to map elements to indices, and 
-    return the associated EMD.
-    '''
-    if type(comp1) is str:
-        source_demands = ElMD(comp1).ratio_vector
-    else:
-        source_demands = comp1
 
-    if type(comp2) is ElMD:
-        sink_demands = ElMD(comp2.formula, metric=comp1.metric).ratio_vector
-    elif type(comp2) is str:
-        sink_demands = ElMD(comp2, metric=comp1.metric).ratio_vector
+def elmd(comp1, comp2, metric="mod_petti"):
+    if isinstance(comp1, str):
+        comp1 = ElMD(comp1, metric=metric)
+        source_demands = comp1.ratio_vector
+    elif isinstance(comp1, ElMD):
+        source_demands = comp1.ratio_vector
     else:
-        sink_demands = comp2
+        raise TypeError(f"First composition must be either a string or ElMD object, you input an object of type {type(comp1)}")
 
-    source_labels = np.array([table[lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=int)
-    sink_labels = np.array([table[lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=int)
+    if isinstance(comp2, str):
+        comp2 = ElMD(comp2, metric=metric)
+        sink_demands = comp2.ratio_vector
+    elif isinstance(comp2, ElMD):
+        sink_demands = comp2.ratio_vector
+
+    else:
+        raise TypeError(f"Second composition must be either a string or ElMD object, you input an object of type {type(comp2)}")
+
+    if isinstance(comp1, ElMD) and isinstance(comp2, ElMD) and comp1.metric != comp2.metric:
+        raise TypeError(f"Both ElMD objects must use the same metric. comp1 has metric={comp1.metric} and comp2 has metric={comp2.metric}")
+
+    source_labels = np.array([comp1.periodic_tab[comp1.petti_lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=float)
+    sink_labels = np.array([comp2.periodic_tab[comp2.petti_lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=float)
     
     source_demands = source_demands[np.where(source_demands > 0)[0]]
     sink_demands = sink_demands[np.where(sink_demands > 0)[0]]
 
-    # Perform a floating point conversion
-    network_costs = np.array([np.linalg.norm(x - y) * 1000000 for x in source_labels for y in sink_labels], dtype=np.int64) 
+    # Perform a floating point conversion to ints to ensure algorithm terminates
+    network_costs = np.array([[np.linalg.norm(x - y) * 1000000 for x in sink_labels] for y in source_labels], dtype=np.int64) 
+
+    return EMD(source_demands, sink_demands, network_costs)
+
+
+def EMD(source_demands, sink_demands, network_costs):
+    '''
+    A numba compiled EMD function from the network simplex algorithm to compare 
+    two distributions with a given distance matrix between node labels
+    '''
+
+    if len(network_costs.shape) == 2:
+        n, m = network_costs.shape
+
+        if len(source_demands) != n or len(sink_demands) != m:
+            raise ValueError(f"Shape of 2D distance matrix must have n rows and m columns where n is the number of source_demands, and m is the number of sink demands. You have n={len(source_demands)} source_demands and m={len(sink_demands)} sink_demands, but your distance matrix is [{n}, {m}].")
+
+        network_costs = network_costs.ravel()
+
+    else:
+        raise ValueError("Must input a 2D distance matrix between the elements of both distributions")
 
     return network_simplex(source_demands, sink_demands, network_costs)
 
@@ -125,6 +158,7 @@ class ElMD():
         self.periodic_tab = _get_periodic_tab(metric)
         self.lookup = self._gen_lookup()
         self.petti_lookup = _get_periodic_tab("mod_petti")
+        self.petti_lookup = self.filter_petti_lookup()
 
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
@@ -135,28 +169,42 @@ class ElMD():
         self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
 
-    def elmd(self, comp2 = None, comp1 = None, verbose=False):
+
+    def filter_petti_lookup(self):
+        # Remove any elements from the mod_petti dictionary that our absent from our lookup table
+        filtered_petti = {k: v for k, v in self.petti_lookup.items() if k in self.periodic_tab }
+
+        lookup = {k: v for k, v in filtered_petti.items() }
+
+        for k, v in filtered_petti.items():
+            lookup[v] = k
+
+        # Now reindex each of the values to create a linearly spaced scale for lookups
+        comps, vals = zip(*[(k, v) for k, v in filtered_petti.items()])
+        sorted_inds = np.argsort(vals)
+        
+        ret_dict = {}
+        
+        for i, orig_index in enumerate(sorted_inds):
+            ret_dict[comps[orig_index]] = i
+            ret_dict[i] = comps[orig_index]
+            
+    
+        return ret_dict
+
+
+
+
+    def elmd(self, comp2 = None, comp1 = None):
         '''
         Calculate the minimal cost flow between two weighted vectors using the
         network simplex method. This is overloaded to accept a range of input
         types.
         '''
         if comp1 == None:
-            comp1 = self.ratio_vector
+            comp1 = self
 
-        if isinstance(comp1, str):
-            comp1 = ElMD(comp1, metric=self.metric).ratio_vector
-
-        if isinstance(comp1, ElMD):
-            comp1 = comp1.ratio_vector
-
-        if isinstance(comp2, str):
-            comp2 = ElMD(comp2, metric=self.metric).ratio_vector
-
-        if isinstance(comp2, ElMD):
-            comp2 = ElMD(comp2.formula, metric=self.metric).ratio_vector
-
-        return EMD(comp1, comp2, self.lookup, self.periodic_tab)
+        return elmd(comp1, comp2, metric=self.metric)
 
     def _gen_ratio_vector(self):
         '''
@@ -172,13 +220,13 @@ class ElMD():
         comp_ratios = []
 
         for k in sorted(comp.keys()):
-            comp_labels.append(self._get_position(k))
+            comp_labels.append(self.petti_lookup[k])
             comp_ratios.append(comp[k])
 
         indices = np.array(comp_labels, dtype=np.int64)
         ratios = np.array(comp_ratios, dtype=np.float64)
 
-        numeric = np.zeros(shape=len(self.periodic_tab), dtype=np.float64)
+        numeric = np.zeros(shape=max([x for x in self.petti_lookup.values() if isinstance(x, int)]), dtype=np.float64)
         numeric[indices] = ratios
 
         return numeric
@@ -200,7 +248,7 @@ class ElMD():
         indices = np.array(comp_labels, dtype=np.int64)
         ratios = np.array(comp_ratios, dtype=np.float64)
 
-        numeric = np.zeros(shape=103, dtype=np.float64)
+        numeric = np.zeros(shape=len(self.petti_lookup), dtype=np.float64)
         numeric[indices] = ratios
 
         return numeric
@@ -210,7 +258,7 @@ class ElMD():
         """
         Perform the dot product between the ratio vector and its elemental representation. 
         """
-        n = int(len(self.lookup) / 2)
+        n = int(len(self.petti_lookup) / 2) - 1
 
         # If we only have an integer representation, return the vector as is
         if type(self.periodic_tab["H"]) is int:
@@ -223,7 +271,7 @@ class ElMD():
 
         for i, k in enumerate(self.normed_composition.keys()):
             try:
-                numeric[self.lookup[k]] = self.periodic_tab[k]
+                numeric[self.petti_lookup[k]] = self.periodic_tab[k]
             except:
                 print(f"Failed to process {self.formula} with {self.metric} due to unknown element {k}, discarding this element.")
 
@@ -246,9 +294,9 @@ class ElMD():
 
         for i, ind in enumerate(inds):
             if self.petti_vector[ind] == 1:
-                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}"
+                pretty_form = pretty_form + f"{self.petti_lookup[ind]}"
             else:
-                pretty_form = pretty_form + f"{self.petti_lookup[str(ind)]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
+                pretty_form = pretty_form + f"{self.petti_lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
 
@@ -387,7 +435,7 @@ class ElMD():
 
         except:
             if self.strict_parsing:
-                raise KeyError(f"One of the elements in {self.composition} is not in the {self.metric} dictionary. Try a different representation or use silent=False")
+                raise KeyError(f"One of the elements in {self.composition} is not in the {self.metric} dictionary. Try a different representation or use strict_parsing=False")
             else:
                 return -1
 
