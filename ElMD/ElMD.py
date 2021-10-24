@@ -44,8 +44,8 @@ from functools import lru_cache
 def main():
     import time 
     ts = time.time()
-    x = ElMD("LiCl", metric="mod_petti")
-    y = ElMD("NaCl", metric="mod_petti")
+    x = ElMD("LiCl", metric="mat2vec")
+    y = ElMD("NaCl", metric="mat2vec")
     # z = ElMD("Zr3AlN", metric="atomic")
 
     print(x.elmd(y))
@@ -149,7 +149,7 @@ class ElMD():
     # all floats to capture the decimal places
     FP_MULTIPLIER = 100000000
 
-    def __init__(self, formula="", metric="mod_petti", feature_pooling="agg", strict_parsing=False, x=1):
+    def __init__(self, formula="", metric="mod_petti", strict_parsing=False, x=1):
         self.metric = metric
         self.formula = formula.strip()
         self.strict_parsing = strict_parsing
@@ -165,7 +165,6 @@ class ElMD():
         self.ratio_vector = self._gen_ratio_vector()
         self.petti_vector = self._gen_petti_vector()
 
-        self.feature_pooling = feature_pooling
         self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
 
@@ -191,9 +190,6 @@ class ElMD():
             
     
         return ret_dict
-
-
-
 
     def elmd(self, comp2 = None, comp1 = None):
         '''
@@ -253,17 +249,15 @@ class ElMD():
 
         return numeric
         
-
     def _gen_feature_vector(self):
         """
         Perform the dot product between the ratio vector and its elemental representation. 
         """
-        n = int(len(self.petti_lookup) / 2) - 1
-
         # If we only have an integer representation, return the vector as is
         if type(self.periodic_tab["H"]) is int:
             return self.ratio_vector
         
+        n = int(len(self.normed_composition))
         m = len(self.periodic_tab["H"])
         numeric = np.zeros(shape=(n, m), dtype=float)
 
@@ -271,18 +265,14 @@ class ElMD():
 
         for i, k in enumerate(self.normed_composition.keys()):
             try:
-                numeric[self.petti_lookup[k]] = self.periodic_tab[k]
+                numeric[i] = self.periodic_tab[k]
             except:
-                print(f"Failed to process {self.formula} with {self.metric} due to unknown element {k}, discarding this element.")
+                print(f"Failed to process {self.formula} with {self.metric} due to element {k}, discarding this element.")
 
         element_features = np.nan_to_num(numeric)
 
-        weighted_vector = np.dot(self.ratio_vector, element_features)
+        weighted_vector = np.dot(self.ratio_vector[np.where(self.ratio_vector > 0)[0]], element_features)
 
-        if self.feature_pooling == "mean":
-            np.seterr(divide='ignore', invalid='ignore')
-            weighted_vector = weighted_vector / len(self.normed_composition)
-        
         return weighted_vector
 
     def _gen_pretty(self):
