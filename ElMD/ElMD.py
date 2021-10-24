@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.9"
+__version__ = "0.4.10"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -44,7 +44,7 @@ from functools import lru_cache
 def main():
     import time 
     ts = time.time()
-    x = ElMD("LiCl", metric="mat2vec")
+    x = ElMD("Li0.167 Al0.167 H0.667", metric="mat2vec")
     y = ElMD("NaCl", metric="mat2vec")
     # z = ElMD("Zr3AlN", metric="atomic")
 
@@ -156,40 +156,18 @@ class ElMD():
         self.x = x
         
         self.periodic_tab = _get_periodic_tab(metric)
-        self.lookup = self._gen_lookup()
         self.petti_lookup = _get_periodic_tab("mod_petti")
-        self.petti_lookup = self.filter_petti_lookup()
+        self.lookup = self._gen_lookup()
+        # self.petti_lookup = self.filter_petti_lookup()
 
         self.composition = self._parse_formula(self.formula)
         self.normed_composition = self._normalise_composition(self.composition)
         self.ratio_vector = self._gen_ratio_vector()
         self.petti_vector = self._gen_petti_vector()
 
-        self.feature_vector = self._gen_feature_vector()
         self.pretty_formula = self._gen_pretty()
 
-
-    def filter_petti_lookup(self):
-        # Remove any elements from the mod_petti dictionary that our absent from our lookup table
-        filtered_petti = {k: v for k, v in self.petti_lookup.items() if k in self.periodic_tab }
-
-        lookup = {k: v for k, v in filtered_petti.items() }
-
-        for k, v in filtered_petti.items():
-            lookup[v] = k
-
-        # Now reindex each of the values to create a linearly spaced scale for lookups
-        comps, vals = zip(*[(k, v) for k, v in filtered_petti.items()])
-        sorted_inds = np.argsort(vals)
-        
-        ret_dict = {}
-        
-        for i, orig_index in enumerate(sorted_inds):
-            ret_dict[comps[orig_index]] = i
-            ret_dict[i] = comps[orig_index]
-            
-    
-        return ret_dict
+        self.feature_vector = self._gen_feature_vector()
 
     def elmd(self, comp2 = None, comp1 = None):
         '''
@@ -197,8 +175,11 @@ class ElMD():
         network simplex method. This is overloaded to accept a range of input
         types.
         '''
-        if comp1 == None:
+        if comp1 is None:
             comp1 = self
+
+        if comp2 is None:
+            raise TypeError("elmd() missing 1 required positional argument")
 
         return elmd(comp1, comp2, metric=self.metric)
 
@@ -222,7 +203,7 @@ class ElMD():
         indices = np.array(comp_labels, dtype=np.int64)
         ratios = np.array(comp_ratios, dtype=np.float64)
 
-        numeric = np.zeros(shape=max([x for x in self.petti_lookup.values() if isinstance(x, int)]), dtype=np.float64)
+        numeric = np.zeros(shape=max([x for x in self.petti_lookup.values() if isinstance(x, int)]) + 1, dtype=np.float64)
         numeric[indices] = ratios
 
         return numeric
@@ -284,18 +265,18 @@ class ElMD():
 
         for i, ind in enumerate(inds):
             if self.petti_vector[ind] == 1:
-                pretty_form = pretty_form + f"{self.petti_lookup[ind]}"
+                pretty_form = pretty_form + f"{self.lookup[ind]}"
             else:
-                pretty_form = pretty_form + f"{self.petti_lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
+                pretty_form = pretty_form + f"{self.lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
 
     def _gen_lookup(self):
         lookup = {}
         
-        for i, (k, v) in enumerate(self.periodic_tab.items()):
-            lookup[k] = i
-            lookup[i] = k 
+        for i, (k, v) in enumerate(self.petti_lookup.items()):
+            lookup[k] = v 
+            lookup[int(v)] = k 
 
         return lookup
 
