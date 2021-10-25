@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.10"
+__version__ = "0.4.11"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -109,8 +109,8 @@ def elmd(comp1, comp2, metric="mod_petti"):
     if isinstance(comp1, ElMD) and isinstance(comp2, ElMD) and comp1.metric != comp2.metric:
         raise TypeError(f"Both ElMD objects must use the same metric. comp1 has metric={comp1.metric} and comp2 has metric={comp2.metric}")
 
-    source_labels = np.array([comp1.periodic_tab[comp1.petti_lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=float)
-    sink_labels = np.array([comp2.periodic_tab[comp2.petti_lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=float)
+    source_labels = np.array([comp1.periodic_tab[comp1.lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=float)
+    sink_labels = np.array([comp2.periodic_tab[comp2.lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=float)
     
     source_demands = source_demands[np.where(source_demands > 0)[0]]
     sink_demands = sink_demands[np.where(sink_demands > 0)[0]]
