@@ -1,3 +1,4 @@
 build/**
 ElMD.egg-info/**
 dist/**
+scratch/
