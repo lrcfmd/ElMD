@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.11"
+__version__ = "0.4.13"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -44,9 +44,10 @@ from functools import lru_cache
 def main():
     import time 
     ts = time.time()
-    x = ElMD("LiCl", metric="mod_petti")
-    y = ElMD("NaCl", metric="mod_petti")
-    # z = ElMD("Zr3AlN", metric="atomic")
+    x = ElMD("CaTiO3", metric="mod_petti")
+    y = ElMD("CaTiO4", metric="mod_petti")
+    
+    
 
     print(x.elmd(y))
     print(y.elmd(x))
@@ -58,8 +59,13 @@ def main():
     print(x.elmd(y))
     print(y.elmd(x))
 
-
-    print(y.elmd(z))
+    try:
+        print(y.elmd(z))
+    except Exception as e:
+        print(e)
+        z = ElMD("CaTiO5", metric="magpie")
+        print(y.elmd(z))
+    
     print(x)
     print(x.feature_vector)
     print(time.time() - ts)
@@ -116,7 +122,7 @@ def elmd(comp1, comp2, metric="mod_petti"):
     sink_demands = sink_demands[np.where(sink_demands > 0)[0]]
 
     # Perform a floating point conversion to ints to ensure algorithm terminates
-    network_costs = np.array([[np.linalg.norm(x - y) for x in sink_labels] for y in source_labels], dtype=np.int64) 
+    network_costs = np.array([[np.linalg.norm(x - y) for x in sink_labels] for y in source_labels], dtype=np.float64) 
 
     return EMD(source_demands, sink_demands, network_costs)
 
@@ -141,7 +147,7 @@ def EMD(source_demands, sink_demands, network_costs):
     return network_simplex(source_demands, sink_demands, network_costs)
 
 class ElMD():
-    ATOM_REGEX = '([A-Z][a-z]*)(\d*\.?\d*[-+]?x?)'
+    ATOM_REGEX = r'([A-Z][a-z]*)(\d*\.?\d*[-+]?x?)'
     OPENERS = '({['
     CLOSERS = ')}]'
 
@@ -258,7 +264,7 @@ class ElMD():
 
     def _gen_pretty(self):
         '''
-        Return a normalized formula string from the vector format
+        Return a normalized formula string ordered by the mod_petti dictionary
         '''
         inds = np.where(self.petti_vector != 0.0)[0]
         pretty_form = ""
@@ -282,7 +288,6 @@ class ElMD():
 
     def _is_balanced(self, formula):
         """Check if all sort of brackets come in pairs."""
-        # Very naive check, just here because you always need some input checking
         c = Counter(formula)
         return c['['] == c[']'] and c['{'] == c['}'] and c['('] == c[')']
 
@@ -309,7 +314,7 @@ class ElMD():
                 if atom in self.lookup:
                     res[atom] += float(n or 1)
                 elif self.strict_parsing:
-                    raise ValueError(f"The element {atom} in the composition {self.formula} is not in the lookup dictionary for {self.metric}")
+                    raise ValueError(f"The element {atom} in the composition {self.formula} is not in the lookup dictionary for {self.metric}. Set strict_parsing=False to skip this element")
 
             except KeyError:
                 res[atom] = float(n or 1)
@@ -339,7 +344,7 @@ class ElMD():
 
             if token in self.CLOSERS:
                 # Check for an index for this part
-                m = re.match('\d+\.*\d*|\.\d*', formula[i+1:])
+                m = re.match(r'\d+\.*\d*|\.\d*', formula[i+1:])
                 if m:
                     weight = float(m.group(0))
                     i += len(m.group(0))
@@ -448,7 +453,7 @@ All rights reserved.
 BSD license.
 '''
 
-@njit(cache=True)
+# @njit(cache=True)
 def reduced_cost(i, costs, potentials, tails, heads, flows):
     """Return the reduced cost of an edge i.
     """
@@ -459,7 +464,7 @@ def reduced_cost(i, costs, potentials, tails, heads, flows):
     else:
         return -c
 
-@njit(cache=True)
+# @njit(cache=True)
 def find_entering_edges(e, f, tails, heads, costs, potentials, flows):
     """Yield entering edges until none can be found.
     """
@@ -515,7 +520,7 @@ def find_entering_edges(e, f, tails, heads, costs, potentials, flows):
     # All edges have nonnegative reduced costs. The flow is optimal.
     return -1, -1, -1, -1
 
-@njit(cache=True)
+# @njit(cache=True)
 def find_apex(p, q, size, parent):
     """Find the lowest common ancestor of nodes p and q in the spanning
     tree.
@@ -539,7 +544,7 @@ def find_apex(p, q, size, parent):
             else:
                 return p
 
-@njit(cache=True)
+# @njit(cache=True)
 def trace_path(p, w, edge, parent):
     """Return the nodes and edges on the path from node p to its ancestor
     w.
@@ -554,7 +559,7 @@ def trace_path(p, w, edge, parent):
 
     return cycle_nodes, cycle_edges
 
-@njit(cache=True)
+# @njit(cache=True)
 def find_cycle(i, p, q, size, edge, parent):
     """Return the nodes and edges on the cycle containing edge i == (p, q)
     when the latter is added to the spanning tree.
@@ -579,7 +584,7 @@ def find_cycle(i, p, q, size, edge, parent):
 
     return cycle_nodes, cycle_edges
 
-@njit(cache=True)
+# @njit(cache=True)
 def residual_capacity(i, p, capac, flows, tails):
     """Return the residual capacity of an edge i in the direction away
     from its endpoint p.
@@ -590,7 +595,7 @@ def residual_capacity(i, p, capac, flows, tails):
     else:
         return flows[np.int64(i)]
 
-@njit(cache=True)
+# @njit(cache=True)
 def find_leaving_edge(cycle_nodes, cycle_edges, capac, flows, tails, heads):
     """Return the leaving edge in a cycle represented by cycle_nodes and
     cycle_edges.
@@ -612,7 +617,7 @@ def find_leaving_edge(cycle_nodes, cycle_edges, capac, flows, tails, heads):
     t = heads[np.int64(j)] if tails[np.int64(j)] == s else tails[np.int64(j)]
     return j, s, t
 
-@njit(cache=True)
+# @njit(cache=True)
 def augment_flow(cycle_nodes, cycle_edges, f, tails, flows):
     """Augment f units of flow along a cycle representing Wn with cycle_edges.
     """
@@ -622,7 +627,7 @@ def augment_flow(cycle_nodes, cycle_edges, f, tails, flows):
         else:
             flows[int(i)] -= f
 
-@njit(cache=True)
+# @njit(cache=True)
 def trace_subtree(p, last, next):
     """Yield the nodes in the subtree rooted at a node p.
     """
@@ -636,7 +641,7 @@ def trace_subtree(p, last, next):
 
     return np.array(tree, dtype=np.int64)
 
-@njit(cache=True)
+# @njit(cache=True)
 def remove_edge(s, t, size, prev, last, next, parent, edge):
     """Remove an edge (s, t) where parent[t] == s from the spanning tree.
     """
@@ -661,7 +666,7 @@ def remove_edge(s, t, size, prev, last, next, parent, edge):
             last[s] = prev_t
         s = parent[s]
 
-@njit(cache=True)
+# @njit(cache=True)
 def make_root(q, parent, size, last, prev, next, edge):
     """
     Make a node q the root of its containing subtree.
@@ -709,7 +714,7 @@ def make_root(q, parent, size, last, prev, next, edge):
         prev[q] = last_p
         last[q] = last_p
 
-@njit(cache=True)
+# @njit(cache=True)
 def add_edge(i, p, q, next, prev, last, size, parent, edge):
     """Add an edge (p, q) to the spanning tree where q is the root of a
     subtree.
@@ -735,7 +740,7 @@ def add_edge(i, p, q, next, prev, last, size, parent, edge):
             last[p] = last_q
         p = parent[p]
 
-@njit(cache=True)
+# @njit(cache=True)
 def update_potentials(i, p, q, heads, potentials, costs, last, next):
     """Update the potentials of the nodes in the subtree rooted at a node
     q connected to its parent p by an edge i.
@@ -749,7 +754,7 @@ def update_potentials(i, p, q, heads, potentials, costs, last, next):
     for q in tree:
         potentials[q] += d
 
-@njit(cache=True)
+# @njit(cache=True)
 def network_simplex(source_demands, sink_demands, network_costs):
     '''
     This is a port of the network simplex algorithm implented by Loïc Séguin-C
@@ -821,6 +826,7 @@ def network_simplex(source_demands, sink_demands, network_costs):
     heads = np.concatenate((conn_heads, np.array(dummy_heads).T)).astype(np.int64)  # edge targets
 
     # Create costs and capacities for the arcs between nodes
+    network_costs = network_costs * fp_multiplier
     network_capac = np.array([np.array([source_demands[i], sink_demands[j]]).min() for i, x in np.ndenumerate(sources) for j, y in np.ndenumerate(sinks)], dtype=np.float64) * fp_multiplier
 
     # TODO finish?
@@ -834,7 +840,7 @@ def network_simplex(source_demands, sink_demands, network_costs):
     # Set a suitably high integer for infinity
     faux_inf = 3 * np.max(np.array((np.sum(network_capac.astype(np.int64)), np.sum(np.absolute(network_costs)), np.max(np.absolute(demands))), dtype=np.int64))
 
-    network_costs = network_costs * fp_multiplier
+    # network_costs = network_costs * fp_multiplier
 
     # Add the costs and capacities to the dummy nodes
     costs = np.concatenate((network_costs, np.ones(nodes.shape[0]) * faux_inf)).astype(np.int64)
@@ -895,6 +901,7 @@ def network_simplex(source_demands, sink_demands, network_costs):
         flow_cost += flow * edge_costs[arc_ind]
 
     final = flow_cost / fp_multiplier 
+    final = final.astype(np.float64)
     final = final / fp_multiplier 
 
     return final[0]
