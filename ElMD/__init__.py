@@ -1,3 +1,2 @@
-from ElMD.ElMD import EMD
-from ElMD.ElMD import ElMD
-from ElMD.ElMD import elmd
+"""Implementation of Element movers distance for chemical similarity compositions."""
+__version__ = "0.4.15"
