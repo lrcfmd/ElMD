@@ -46,8 +46,6 @@ def main():
     ts = time.time()
     x = ElMD("CaTiO3", metric="mod_petti")
     y = ElMD("CaTiO4", metric="mod_petti")
-    
-    
 
     print(x.elmd(y))
     print(y.elmd(x))
