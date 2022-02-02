@@ -50,6 +50,9 @@ def main():
     print(x.elmd(y))
     print(y.elmd(x))
 
+    z = x.full_feature_vector()
+    print(z)
+
     print(np.sum(np.abs(np.cumsum(x.ratio_vector - y.ratio_vector))))
 
     x = ElMD("Li7La3Hf2O12", metric="magpie")
@@ -70,7 +73,7 @@ def main():
     print(x.feature_vector)
     print(time.time() - ts)
 
-@lru_cache(maxsize=8)
+@lru_cache(maxsize=16)
 def _get_periodic_tab(metric):
     """
     Load periodic data from the python site_packages/ElMD folder
@@ -88,10 +91,11 @@ def _get_periodic_tab(metric):
 
     # python_package_path = "" # For local debugging
 
-    with open(os.path.join(python_package_path, "ElMD", "el_lookup", f"{metric}.json"), 'r') as j:
+    local_lookup_folder = os.path.join(python_package_path, "ElMD", "el_lookup")
+    with open(os.path.join(local_lookup_folder, f"{metric}.json"), 'r') as j:
         ElementDict = json.loads(j.read())
             
-    return ElementDict
+    return ElementDict, local_lookup_folder
     
 
 def elmd(comp1, comp2, metric="mod_petti"):
@@ -165,8 +169,8 @@ class ElMD():
         self.strict_parsing = strict_parsing
         self.x = x
         
-        self.periodic_tab = _get_periodic_tab(metric)
-        self.petti_lookup = _get_periodic_tab("mod_petti")
+        self.periodic_tab, self.el_lookup_folder = _get_periodic_tab(metric)
+        self.petti_lookup, _ = _get_periodic_tab("mod_petti")
         self.lookup = self._gen_lookup()
         # self.petti_lookup = self.filter_petti_lookup()
 
@@ -179,6 +183,42 @@ class ElMD():
 
         self.feature_vector = self._gen_feature_vector()
 
+    def full_feature_vector(self):
+        feature_dicts = os.listdir(self.el_lookup_folder)
+        
+        # Skip unscaled chemical feature vectors
+        feature_dicts = [f for f in feature_dicts if f[:-5] + "_sc.json" not in feature_dicts]
+        # Strip redundant permutations of atomic number
+        feature_dicts = [f[:-5] for f in feature_dicts if f[:-5] not in ["atomic", "mendeleev", "petti"]]
+
+        # full_features = np.concatenate([ElMD(self., metric=).])
+        full_features = []
+
+        for f in feature_dicts:
+            d, _ = _get_periodic_tab(f)
+            vectors = np.array([d[el] for el in self.normed_composition.keys()])
+
+            # mean of els
+            full_features.append(np.mean(vectors, axis=0))
+            
+            weighted_features = np.array([r for r in self.normed_composition.values()]) * vectors.T
+            weighted_features = weighted_features.T
+            # weighted mean
+            full_features.append(np.mean(weighted_features, axis=0))
+            # min
+            full_features.append(np.min(weighted_features, axis=0))
+            # max
+            full_features.append(np.max(weighted_features, axis=0))
+            # range
+            full_features.append(np.max(weighted_features, axis=0) - np.min(vectors, axis=0))
+            # std
+            full_features.append(np.std(weighted_features, axis=0))
+        
+        # convert to numpy array if single dimension
+        full_features = [np.array([x]) if not isinstance(x, np.ndarray) else x for x in full_features]
+
+        return np.concatenate(full_features)
+    
     def elmd(self, comp2 = None, comp1 = None):
         '''
         Calculate the minimal cost flow between two weighted vectors using the
