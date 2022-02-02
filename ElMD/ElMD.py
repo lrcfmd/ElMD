@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.13"
+__version__ = "0.4.16"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -44,13 +44,8 @@ from functools import lru_cache
 def main():
     import time 
     ts = time.time()
-<<<<<<< HEAD
     x = ElMD("LiF", metric="mod_petti")
     y = ElMD("NaCl", metric="mod_petti")
-=======
-    x = ElMD("CaTiO3", metric="mod_petti")
-    y = ElMD("CaTiO4", metric="mod_petti")
->>>>>>> de115bb332c48f27f3557331c61e382d0884c34a
 
     print(x.elmd(y))
     print(y.elmd(x))
@@ -223,7 +218,7 @@ class ElMD():
         full_features = [np.array([x]) if not isinstance(x, np.ndarray) else x for x in full_features]
 
         return np.concatenate(full_features)
-    
+
     def elmd(self, comp2 = None, comp1 = None):
         '''
         Calculate the minimal cost flow between two weighted vectors using the
