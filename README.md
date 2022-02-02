@@ -145,6 +145,12 @@ array([ 48.        ,  29.22138464, 271.235     ,   9.        ,
 
 ```
 
+A feature vector of length 8076 can be generated for each composition by taking the weighted mean, min, max, range, and standard deviation across each elemental feature in the composition by calling the `full_feature_vector()` method.
+
+```python
+> x = ElMD("NaCl").full_feature_vector()
+```
+
 ## Documentation
 
 Complete documentation may be found at www.elmd.io/api
