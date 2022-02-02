@@ -30,6 +30,13 @@ Calculate the distance to a second object with the `elmd` method.
 0.2
 ```
 
+The compositional parser can handle user defined values of `x` when this is applicable.
+
+```python
+latp_02 = ElMD("Li1+xAlxTi2-x(PO4)3", x=0.2) # Li1.2Al0.2Ti1.8(PO4)3
+latp_03 = ElMD("Li1+xAlxTi2-x(PO4)3", x=0.3) # Li1.3Al0.3Ti1.7(PO4)3
+```
+
 Alternate chemical scales may be accessed via the "metric" argument, e.g.
 
 ```python
@@ -38,19 +45,22 @@ Alternate chemical scales may be accessed via the "metric" argument, e.g.
 3.6
 ```
 
-The `elmd()` method is overloaded to take two strings, with the choice of elemental metric taken from the first class.
+The `elmd()` method is overloaded to take two strings, and may be imported directly. The choice of metric is specified with `metric`
 
 ```python
-> elmd = ElMD(metric="magpie_sc").elmd
+from ElMD import elmd
 > elmd("NaCl", "LiCl")
+0.5
+> elmd("NaCl", "LiCl", metric="magpie")
 0.688539
 ```
 
-The compositional parser can handle user defined values of `x` when this is applicable.
+The `EMD` function can also be called directly, with the input being two vectors of distributions and the associated distance matrix between them.
 
 ```python
-latp_02 = ElMD("Li1+xAlxTi2-x(PO4)3", x=0.2) # Li1.2Al0.2Ti1.8(PO4)3
-latp_03 = ElMD("Li1+xAlxTi2-x(PO4)3", x=0.3) # Li1.3Al0.3Ti1.7(PO4)3
+from ElMD import EMD
+> EMD([0.5, 0.5], [0.5, 0.5], [[1, 90], [89, 0]])
+0.5
 ```
 
 ## Elemental Similarity

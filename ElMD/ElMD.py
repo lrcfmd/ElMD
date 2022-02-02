@@ -44,8 +44,13 @@ from functools import lru_cache
 def main():
     import time 
     ts = time.time()
+<<<<<<< HEAD
     x = ElMD("LiF", metric="mod_petti")
     y = ElMD("NaCl", metric="mod_petti")
+=======
+    x = ElMD("CaTiO3", metric="mod_petti")
+    y = ElMD("CaTiO4", metric="mod_petti")
+>>>>>>> de115bb332c48f27f3557331c61e382d0884c34a
 
     print(x.elmd(y))
     print(y.elmd(x))
