@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.21"
+__version__ = "0.4.23"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -41,6 +41,22 @@ from scipy.spatial.distance import squareform
 from numba import njit
 from functools import lru_cache
 
+#%%
+# x = ElMD("LiF", metric="mod_petti")
+# y = ElMD("NaCl", metric="mod_petti")
+
+# print(x.elmd(y))
+# print(y.elmd(x))
+
+# z = x.full_feature_vector()
+# print(z)
+
+# #%%
+# import matplotlib.pyplot as plt
+# plt.pcolormesh(z, cmap='copper')
+
+
+#%%
 def main():
     import time 
     ts = time.time()
@@ -51,6 +67,9 @@ def main():
     print(y.elmd(x))
 
     z = x.full_feature_vector()
+    print(z)
+
+    z = x.full_feature_vector(positional_encode=True)
     print(z)
 
     print(np.sum(np.abs(np.cumsum(x.ratio_vector - y.ratio_vector))))
@@ -183,41 +202,65 @@ class ElMD():
 
         self.feature_vector = self._gen_feature_vector()
 
-    def full_feature_vector(self):
+    def full_feature_vector(self, positional_encode=False, min_freq=1e-4):
         feature_dicts = os.listdir(self.el_lookup_folder)
         
         # Skip unscaled chemical feature vectors
         feature_dicts = [f for f in feature_dicts if f[:-5] + "_sc.json" not in feature_dicts]
-        # Strip redundant permutations of atomic number
-        feature_dicts = [f[:-5] for f in feature_dicts if f[:-5] not in ["atomic", "mendeleev", "petti"]]
-
-        # full_features = np.concatenate([ElMD(self., metric=).])
-        full_features = []
-
-        for f in feature_dicts:
-            d, _ = _get_periodic_tab(f)
-            vectors = np.array([d[el] for el in self.normed_composition.keys()])
-
-            # mean of els
-            full_features.append(np.mean(vectors, axis=0))
-            
-            weighted_features = np.array([r for r in self.normed_composition.values()]) * vectors.T
-            weighted_features = weighted_features.T
-            # weighted mean
-            full_features.append(np.mean(weighted_features, axis=0))
-            # min
-            full_features.append(np.min(weighted_features, axis=0))
-            # max
-            full_features.append(np.max(weighted_features, axis=0))
-            # range
-            full_features.append(np.max(weighted_features, axis=0) - np.min(vectors, axis=0))
-            # std
-            full_features.append(np.std(weighted_features, axis=0))
         
-        # convert to numpy array if single dimension
-        full_features = [np.array([x]) if not isinstance(x, np.ndarray) else x for x in full_features]
+        # Strip redundant permutations of atomic number (included in other descriptors)
+        feature_dicts = [f[:-5] for f in feature_dicts if f[:-5] not in ["atomic", "mendeleev", "petti", "mod_petti"]]
 
-        return np.concatenate(full_features)
+        if not positional_encode:
+            full_features = []
+
+            for f in feature_dicts:
+                d, _ = _get_periodic_tab(f)
+                vectors = np.array([d[el] for el in self.normed_composition.keys()])
+
+                # mean of els
+                full_features.append(np.mean(vectors, axis=0))
+                
+                weighted_features = np.array([r for r in self.normed_composition.values()]) * vectors.T
+                weighted_features = weighted_features.T
+                # weighted mean
+                full_features.append(np.mean(weighted_features, axis=0))
+                # min
+                full_features.append(np.min(weighted_features, axis=0))
+                # max
+                full_features.append(np.max(weighted_features, axis=0))
+                # range
+                full_features.append(np.max(weighted_features, axis=0) - np.min(vectors, axis=0))
+                # std
+                full_features.append(np.std(weighted_features, axis=0))
+
+            # convert to numpy array if single dimension (redundant?)
+            full_features = [np.array([x]) if not isinstance(x, np.ndarray) else x for x in full_features]
+
+            return np.concatenate(full_features)
+
+        else:
+            features = []
+
+            for f in feature_dicts:
+                d, _ = _get_periodic_tab(f)
+                features.append(np.array([d[el] for el in self.normed_composition.keys()]))
+            
+            features = np.concatenate([x for x in features if x.ndim != 1], axis=1)
+
+            d_model = features.shape[1] 
+
+            # Fractional encoding as described by Anthony Wang: https://www.nature.com/articles/s41524-021-00545-1
+            # Method taken from https://towardsdatascience.com/master-positional-encoding-part-i-63c05d90a0c3
+            fraction = np.array([frac for frac in self.normed_composition.values()])
+            freqs = min_freq ** (2 * (np.arange(d_model) // 2) / d_model)
+
+            pos_enc = fraction.reshape(-1,1) * freqs.reshape(1,-1)
+
+            pos_enc[:, ::2] = np.cos(pos_enc[:, ::2])
+            pos_enc[:, 1::2] = np.sin(pos_enc[:, 1::2])
+
+            return pos_enc + features
 
     def elmd(self, comp2 = None, comp1 = None):
         '''
