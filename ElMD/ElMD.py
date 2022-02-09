@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.23"
+__version__ = "0.4.24"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -255,7 +255,9 @@ class ElMD():
             fraction = np.array([frac for frac in self.normed_composition.values()])
             freqs = min_freq ** (2 * (np.arange(d_model) // 2) / d_model)
 
-            pos_enc = fraction.reshape(-1,1) * freqs.reshape(1,-1)
+            # Take a linear scaling of sin functions and concatenate a log
+            # scaling of sin functions to capture small stoichiometries
+            pos_enc = np.concatenate([fraction.reshape(-1,1) * freqs.reshape(1,-1), np.log10(fraction.reshape(-1,1)) * freqs.reshape(1,-1)], axis=1)
 
             pos_enc[:, ::2] = np.cos(pos_enc[:, ::2])
             pos_enc[:, 1::2] = np.sin(pos_enc[:, 1::2])
