@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.24"
+__version__ = "0.4.25"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -255,14 +255,19 @@ class ElMD():
             fraction = np.array([frac for frac in self.normed_composition.values()])
             freqs = min_freq ** (2 * (np.arange(d_model) // 2) / d_model)
 
-            # Take a linear scaling of sin functions and concatenate a log
+            # Take a linear scaling of sin functions and a log
             # scaling of sin functions to capture small stoichiometries
-            pos_enc = np.concatenate([fraction.reshape(-1,1) * freqs.reshape(1,-1), np.log10(fraction.reshape(-1,1)) * freqs.reshape(1,-1)], axis=1)
+            lin_pos_enc = fraction.reshape(-1,1) * freqs.reshape(1,-1)
 
-            pos_enc[:, ::2] = np.cos(pos_enc[:, ::2])
-            pos_enc[:, 1::2] = np.sin(pos_enc[:, 1::2])
+            lin_pos_enc[:, ::2] = np.cos(lin_pos_enc[:, ::2])
+            lin_pos_enc[:, 1::2] = np.sin(lin_pos_enc[:, 1::2])
 
-            return pos_enc + features
+            log_pos_enc = np.log10(fraction.reshape(-1,1) * freqs.reshape(1,-1))
+
+            log_pos_enc[:, ::2] = np.cos(log_pos_enc[:, ::2])
+            log_pos_enc[:, 1::2] = np.sin(log_pos_enc[:, 1::2])
+
+            return features + lin_pos_enc + log_pos_enc
 
     def elmd(self, comp2 = None, comp1 = None):
         '''
