@@ -697,8 +697,9 @@ def find_leaving_edge(cycle_nodes, cycle_edges, capac, flows, tails, heads):
     cyc_edg_rev = cycle_edges[::-1]
     cyc_nod_rev = cycle_nodes[::-1]
 
-    res_caps = [residual_capacity(edg, cyc_nod_rev[i], capac, flows, tails) for i, edg in enumerate(cyc_edg_rev)]
-        
+    res_caps = []
+    for i in range(cycle_edges.shape[0]):
+        res_caps.append(residual_capacity(cyc_edg_rev[i], cyc_nod_rev[i], capac, flows, tails))
 
     res_caps = np.array(res_caps)
 
