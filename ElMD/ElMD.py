@@ -845,7 +845,7 @@ def update_potentials(i, p, q, heads, potentials, costs, last, next):
     for q in tree:
         potentials[q] += d
 
-@numba.njit()
+@njit()
 def occurs_first(array, item1, item2):
     for val in array:
         if val == item1:
