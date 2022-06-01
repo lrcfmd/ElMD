@@ -855,7 +855,7 @@ def occurs_first(array, item1, item2):
         elif val == item2:
             return False
 
-# @njit()
+@njit()
 def network_simplex(source_demands, sink_demands, network_costs):
     '''
     This is a port of the network simplex algorithm implented by Loïc Séguin-C
