@@ -694,8 +694,8 @@ def find_leaving_edge(cycle_nodes, cycle_edges, capac, flows, tails, heads):
     """Return the leaving edge in a cycle represented by cycle_nodes and
     cycle_edges.
     """
-    cyc_edg_rev = np.flip(cycle_edges)
-    cyc_nod_rev = np.flip(cycle_nodes)
+    cyc_edg_rev = cycle_edges[::-1]
+    cyc_nod_rev = cycle_nodes[::-1]
 
     res_caps = [residual_capacity(edg, cyc_nod_rev[i], capac, flows, tails) for i, edg in enumerate(cyc_edg_rev)]
         
