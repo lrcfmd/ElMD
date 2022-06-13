@@ -721,19 +721,6 @@ def augment_flow(cycle_nodes, cycle_edges, f, tails, flows):
         else:
             flows[i] -= f
 
-@njit(cache=True)
-def trace_subtree(p, last, next):
-    """Yield the nodes in the subtree rooted at a node p.
-    """
-    tree = []
-    tree.append(p)
-
-    l = last[p]
-    while p != l:
-        p = next[p]
-        tree.append(p)
-
-    return np.array(tree, dtype=np.int64)
 
 @njit(cache=True)
 def remove_edge(s, t, size, prev, last, next, parent, edge):
