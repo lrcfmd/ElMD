@@ -108,7 +108,7 @@ def _get_periodic_tab(metric):
         except:
             pass 
 
-    python_package_path = "" # For local debugging
+    # python_package_path = "" # For local debugging
 
     local_lookup_folder = os.path.join(python_package_path, "ElMD", "el_lookup")
     with open(os.path.join(local_lookup_folder, f"{metric}.json"), 'r') as j:
