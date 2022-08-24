@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.5.1"
+__version__ = "0.5.4"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -32,17 +32,21 @@ import re
 import os 
 import pkg_resources
 
+from functools import lru_cache
 from site import getsitepackages
 from collections import Counter
 from copy import deepcopy
 
 import numpy as np
-from scipy.spatial.distance import squareform
-from numba import njit
-from functools import lru_cache
 
+try:
+    from numba import njit
+except ImportError:
+    def njit(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
 
-#%%
 def main():
     import time 
     ts = time.time()
