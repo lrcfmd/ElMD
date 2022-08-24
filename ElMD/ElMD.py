@@ -107,7 +107,7 @@ def elmd(comp1, comp2, metric="mod_petti", return_assignments=False):
         raise TypeError(f"Second composition must be either a string or ElMD object, you input an object of type {type(comp2)}")
 
     if isinstance(comp1, ElMD) and isinstance(comp2, ElMD) and comp1.metric != comp2.metric:
-        comp2 = ElMD(comp2.composition, metric=comp1.metric)
+        comp2 = ElMD(comp2.formula, metric=comp1.metric)
 
     source_labels = np.array([comp1.periodic_tab[comp1.lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=float)
     sink_labels = np.array([comp2.periodic_tab[comp2.lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=float)
