@@ -30,6 +30,20 @@ Calculate the distance to a second object with the `elmd` method.
 0.2
 ```
 
+If the assignment plan (how each element in the source composition is mapped to the target composition) is required, this may be returned by setting the `return_assignments` flag in the `elmd` method.
+
+```python
+> x.elmd("SrTiO3", return_assignments=True)
+(0.2, array([0.2, 0. , 0. , 0. , 0.2, 0. , 0. , 0. , 0.6]))
+```
+
+If the `mod_petti` elemental scale is suitable and no assignment plan is required, a significantly faster EMD algorithm may be used by setting `metric="fast"`
+```python
+> x = ElMD("CaTiO3", metric="fast")
+> x.elmd("SrTiO3")
+0.2
+```
+
 The compositional parser can handle user defined values of `x` when this is applicable.
 
 ```python
