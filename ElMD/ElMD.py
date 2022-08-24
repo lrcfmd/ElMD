@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.4.25"
+__version__ = "0.5.1"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -41,55 +41,23 @@ from scipy.spatial.distance import squareform
 from numba import njit
 from functools import lru_cache
 
-#%%
-# x = ElMD("LiF", metric="mod_petti")
-# y = ElMD("NaCl", metric="mod_petti")
-
-# print(x.elmd(y))
-# print(y.elmd(x))
-
-# z = x.full_feature_vector()
-# print(z)
-
-# #%%
-# import matplotlib.pyplot as plt
-# plt.pcolormesh(z, cmap='copper')
-
 
 #%%
 def main():
     import time 
     ts = time.time()
-    x = ElMD("LiF", metric="mod_petti")
+    x = ElMD("CaTiO3", metric="mod_petti")
     y = ElMD("NaCl", metric="mod_petti")
 
     print(x.elmd(y))
     print(y.elmd(x))
 
-    z = x.full_feature_vector()
-    print(z)
-
-    z = x.full_feature_vector(positional_encode=True)
-    print(z)
-
-    print(np.sum(np.abs(np.cumsum(x.ratio_vector - y.ratio_vector))))
-
-    x = ElMD("Li7La3Hf2O12", metric="magpie")
-    y = ElMD("CsPbI3", metric="magpie")
-    # z = ElMD("Zr3AlN", metric="atomic")
+    x = ElMD("CaTiO3", metric="fast")
+    y = ElMD("NaCl", metric="fast")
 
     print(x.elmd(y))
     print(y.elmd(x))
 
-    try:
-        print(y.elmd(z))
-    except Exception as e:
-        print(e)
-        z = ElMD("CaTiO5", metric="magpie")
-        print(y.elmd(z))
-    
-    print(x)
-    print(x.feature_vector)
     print(time.time() - ts)
 
 @lru_cache(maxsize=16)
@@ -97,6 +65,9 @@ def _get_periodic_tab(metric):
     """
     Load periodic data from the python site_packages/ElMD folder
     """
+    if metric == "fast":
+        metric = "mod_petti"
+
     paths = getsitepackages()
 
     python_package_path = ""
@@ -117,7 +88,7 @@ def _get_periodic_tab(metric):
     return ElementDict, local_lookup_folder
     
 
-def elmd(comp1, comp2, metric="mod_petti"):
+def elmd(comp1, comp2, metric="mod_petti", return_assignments=False):
     if isinstance(comp1, str):
         comp1 = ElMD(comp1, metric=metric)
         source_demands = comp1.ratio_vector
@@ -147,8 +118,10 @@ def elmd(comp1, comp2, metric="mod_petti"):
     # Perform a floating point conversion to ints to ensure algorithm terminates
     network_costs = np.array([[np.linalg.norm(x - y) for x in sink_labels] for y in source_labels], dtype=np.float64) 
 
-    return EMD(source_demands, sink_demands, network_costs)
-
+    if return_assignments:
+        return EMD(source_demands, sink_demands, network_costs)
+    else:
+        return EMD(source_demands, sink_demands, network_costs)[0]
 
 def EMD(source_demands, sink_demands, network_costs):
     '''
@@ -168,6 +141,10 @@ def EMD(source_demands, sink_demands, network_costs):
         raise ValueError("Must input a 2D distance matrix between the elements of both distributions")
 
     return network_simplex(source_demands, sink_demands, network_costs)
+
+@njit()
+def simple_emd(dist1, dist2):
+    return np.sum(np.abs(np.cumsum(dist1 - dist2)))
 
 class ElMD():
     ATOM_REGEX = r'([A-Z][a-z]*)(\d*\.?\d*[-+]?x?)'
@@ -269,7 +246,7 @@ class ElMD():
 
             return features + lin_pos_enc + log_pos_enc
 
-    def elmd(self, comp2 = None, comp1 = None):
+    def elmd(self, comp2 = None, comp1 = None, return_assignments=False):
         '''
         Calculate the minimal cost flow between two weighted vectors using the
         network simplex method. This is overloaded to accept a range of input
@@ -281,7 +258,14 @@ class ElMD():
         if comp2 is None:
             raise TypeError("elmd() missing 1 required positional argument")
 
-        return elmd(comp1, comp2, metric=self.metric)
+        if isinstance(comp2, str):
+            comp2 = ElMD(comp2)
+
+        if self.metric == "fast":
+            return simple_emd(comp1.ratio_vector, comp2.ratio_vector)
+
+        else:
+            return elmd(comp1, comp2, metric=self.metric, return_assignments=return_assignments)
 
     def _gen_ratio_vector(self):
         '''
@@ -994,7 +978,7 @@ def network_simplex(source_demands, sink_demands, network_costs):
             update_potentials(i, p, q, heads, potentials, costs, last, next)
 
     flow_cost = 0
-    final_flows = flows[:e].astype(np.float64)
+    final_flows = flows[:e].astype(np.float64) / fp_multiplier
     edge_costs = costs[:e].astype(np.float64)
 
     # dot product is returning wrong values for some reason...
@@ -1003,9 +987,8 @@ def network_simplex(source_demands, sink_demands, network_costs):
 
     final = flow_cost / fp_multiplier 
     final = final.astype(np.float64)
-    final = final / fp_multiplier 
 
-    return final[0]
+    return final[0], final_flows 
 
     
 
