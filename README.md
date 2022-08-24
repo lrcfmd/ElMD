@@ -8,11 +8,17 @@ This repository provides the reference implementations as described in our paper
 
 If you wish to compute this metric between lots of compositions, the ElM2D high-performance library may be more useful and can be found at www.github.com/lrcfmd/ElM2D.
 
-We recommend installation via pip and python 3.7.
+We reccomend installation via pip
 
 ```
-pip install python==3.7
 pip install ElMD
+```
+
+For python 3.8+, due to [known library conflicts](https://github.com/materialsproject/matbench/issues/172) it is reccomended to install ElMD separate to its dependencies 
+
+```
+pip install ElMD --no-deps
+pip intall numpy # if necessary
 ```
 
 ## Usage
