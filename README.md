@@ -8,11 +8,17 @@ This repository provides the reference implementations as described in our paper
 
 If you wish to compute this metric between lots of compositions, the ElM2D high-performance library may be more useful and can be found at www.github.com/lrcfmd/ElM2D.
 
-We recommend installation via pip and python 3.7.
+We reccomend installation via pip
 
 ```
-pip install python==3.7
 pip install ElMD
+```
+
+For python 3.8+, due to [known library conflicts](https://github.com/materialsproject/matbench/issues/172) it is reccomended to install ElMD separate to its dependencies 
+
+```
+pip install ElMD --no-deps
+pip intall numpy # if necessary
 ```
 
 ## Usage
@@ -26,6 +32,20 @@ For simple usage initiate an object with its compositional formula
 Calculate the distance to a second object with the `elmd` method. 
 
 ```python
+> x.elmd("SrTiO3")
+0.2
+```
+
+If the assignment plan (how each element in the source composition is mapped to the target composition) is required, this may be returned by setting the `return_assignments` flag in the `elmd` method.
+
+```python
+> x.elmd("SrTiO3", return_assignments=True)
+(0.2, array([0.2, 0. , 0. , 0. , 0.2, 0. , 0. , 0. , 0.6]))
+```
+
+If the `mod_petti` elemental scale is suitable and no assignment plan is required, a significantly faster EMD algorithm may be used by setting `metric="fast"`
+```python
+> x = ElMD("CaTiO3", metric="fast")
 > x.elmd("SrTiO3")
 0.2
 ```

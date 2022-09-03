@@ -23,7 +23,11 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
+<<<<<<< HEAD
 __version__ = "0.5.5"
+=======
+__version__ = "0.5.4"
+>>>>>>> 0c4ba033856e760ba89e61b5390c791bff7be88f
 __maintainer__ = "Cameron Hargreaves"
 
 '''
