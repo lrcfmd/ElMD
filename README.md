@@ -19,6 +19,7 @@ For python 3.8+, due to [known library conflicts](https://github.com/materialspr
 ```
 pip install ElMD --no-deps
 pip intall numpy # if necessary
+pip install numba # Gives significant speedup, but can cause dependency issues with other libraries
 ```
 
 ## Usage
