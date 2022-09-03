@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.5.1"
+__version__ = "0.5.5"
 __maintainer__ = "Cameron Hargreaves"
 
 '''
@@ -32,17 +32,21 @@ import re
 import os 
 import pkg_resources
 
+from functools import lru_cache
 from site import getsitepackages
 from collections import Counter
 from copy import deepcopy
 
 import numpy as np
-from scipy.spatial.distance import squareform
-from numba import njit
-from functools import lru_cache
 
+try:
+    from numba import njit
+except ImportError:
+    def njit(*args, **kwargs):
+        def decorator(func):
+            return func
+        return decorator
 
-#%%
 def main():
     import time 
     ts = time.time()
@@ -107,7 +111,7 @@ def elmd(comp1, comp2, metric="mod_petti", return_assignments=False):
         raise TypeError(f"Second composition must be either a string or ElMD object, you input an object of type {type(comp2)}")
 
     if isinstance(comp1, ElMD) and isinstance(comp2, ElMD) and comp1.metric != comp2.metric:
-        raise TypeError(f"Both ElMD objects must use the same metric. comp1 has metric={comp1.metric} and comp2 has metric={comp2.metric}")
+        comp2 = ElMD(comp2.formula, metric=comp1.metric)
 
     source_labels = np.array([comp1.periodic_tab[comp1.lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=float)
     sink_labels = np.array([comp2.periodic_tab[comp2.lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=float)
@@ -515,10 +519,17 @@ class ElMD():
         return self.pretty_formula != other.pretty_formula
     
     def __lt__(self, other):
-        return self.elmd("H") < other.elmd("H")
+        # Compute this based on the distance to hydrogen, this does not require
+        # the network simplex to calculate
+        return np.dot(self.ratio_vector, np.arange(len(self.ratio_vector))[::-1]) < \
+                np.dot(other.ratio_vector, np.arange(len(other.ratio_vector))[::-1]) 
 
     def __gt__(self, other):
-        return self.elmd("H") > other.elmd("H")
+        return np.dot(self.ratio_vector, np.arange(len(self.ratio_vector))[::-1]) > \
+                np.dot(other.ratio_vector, np.arange(len(other.ratio_vector))[::-1]) 
+
+    def __hash__(self):
+        return hash(str(self.ratio_vector))
 
 
 '''
