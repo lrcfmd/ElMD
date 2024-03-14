@@ -183,11 +183,6 @@ print(x.vec_to_formula(x.feature_vector)) # Same as above
 print(y.vec_to_formula(x.feature_vector)) # Same as above
 ```
 
-## Documentation
-
-Complete documentation may be found at www.elmd.io/api
-
-
 ## Citing
 
 If you would like to cite this code in your work, please use the Chemistry of Materials reference
