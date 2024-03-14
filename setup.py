@@ -3,21 +3,13 @@ from setuptools import setup, find_packages
 setup(
   name = 'ElMD',        
   packages = ['ElMD'],  
-<<<<<<< HEAD
-  version = '0.5.5',
-=======
-  version = '0.5.4',
->>>>>>> 0c4ba033856e760ba89e61b5390c791bff7be88f
+  version = '0.5.12',
   license='GPL3',       
   description = 'An implementation of the Element movers distance for chemical similarity of ionic compositions',  
   author = 'Cameron Hagreaves',            
   author_email = 'cameron.h@rgreaves.me.uk', 
   url = 'https://github.com/lrcfmd/ElMD/',   
-<<<<<<< HEAD
-  download_url = 'https://github.com/lrcfmd/ElMD/archive/v0.5.5.tar.gz',    
-=======
-  download_url = 'https://github.com/lrcfmd/ElMD/archive/v0.5.4.tar.gz',    
->>>>>>> 0c4ba033856e760ba89e61b5390c791bff7be88f
+  download_url = 'https://github.com/lrcfmd/ElMD/archive/v0.5.12.tar.gz',    
   keywords = ['ChemInformatics', 'Materials Science', 'Machine Learning', 'Materials Representation'],  
   package_data={"elementFeatures": ["el_lookup/*.json"]}, 
   include_package_data=True,

@@ -23,7 +23,7 @@ __author__ = "Cameron Hargreaves"
 __copyright__ = "2019, Cameron Hargreaves"
 __credits__ = ["https://github.com/Zapaan", "Loïc Séguin-C. <loicseguin@gmail.com>", "https://github.com/Bowserinator/"]
 __license__ = "GPL"
-__version__ = "0.5.11"
+__version__ = "0.5.12"
 
 '''
 import json 
@@ -55,11 +55,33 @@ def main():
     print(x.elmd(y))
     print(y.elmd(x))
 
+    print(x.pretty_formula)
+    print(x.vec_to_formula(x.feature_vector))
+    print(y.vec_to_formula(x.feature_vector))
+    print(x.vec_to_formula(y.feature_vector))
+
     x = ElMD("CaTiO3", metric="fast")
     y = ElMD("NaCl", metric="fast")
 
     print(x.elmd(y))
     print(y.elmd(x))
+
+    print(x.pretty_formula)
+    print(x.vec_to_formula(x.feature_vector))
+    print(y.vec_to_formula(x.feature_vector))
+    print(x.vec_to_formula(y.feature_vector))
+
+    x = ElMD("CaTiO3", metric="mendeleev")
+    y = ElMD("NaCl", metric="mendeleev")
+
+    print(x.elmd(y))
+    print(y.elmd(x))
+
+    print(x.pretty_formula)
+    print(x.vec_to_formula(x.feature_vector))
+    print(y.vec_to_formula(x.feature_vector))
+    print(x.vec_to_formula(y.feature_vector))
+
 
     print(time.time() - ts)
 
@@ -178,7 +200,7 @@ class ElMD():
         self.ratio_vector = self._gen_ratio_vector()
         self.petti_vector = self._gen_petti_vector()
 
-        self.pretty_formula = self._gen_pretty()
+        self.pretty_formula = self.vec_to_formula()
 
         self.feature_vector = self._gen_feature_vector()
 
@@ -343,18 +365,21 @@ class ElMD():
 
         return weighted_vector
 
-    def _gen_pretty(self):
+    def vec_to_formula(self, vector=None):
         '''
         Return a normalized formula string ordered by the mod_petti dictionary
         '''
-        inds = np.where(self.petti_vector != 0.0)[0]
+        if vector is None:
+            vector = self.petti_vector
+            
+        inds = np.where(vector != 0.0)[0]
         pretty_form = ""
 
         for i, ind in enumerate(inds):
-            if self.petti_vector[ind] == 1:
+            if vector[ind] == 1:
                 pretty_form = pretty_form + f"{self.lookup[ind]}"
             else:
-                pretty_form = pretty_form + f"{self.lookup[ind]}{self.petti_vector[ind]:.3f}".strip('0') + ' '
+                pretty_form = pretty_form + f"{self.lookup[ind]}{vector[ind]:.3f}".strip('0') + ' '
 
         return pretty_form.strip()
 
