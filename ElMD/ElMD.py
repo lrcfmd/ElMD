@@ -55,6 +55,9 @@ def main():
     print(x.elmd(y))
     print(y.elmd(x))
 
+    x = ElMD("CaTiO3")
+    y = ElMD("NaCl")
+
     print(x.pretty_formula)
     print(x.vec_to_formula(x.feature_vector))
     print(y.vec_to_formula(x.feature_vector))
@@ -81,7 +84,6 @@ def main():
     print(x.vec_to_formula(x.feature_vector))
     print(y.vec_to_formula(x.feature_vector))
     print(x.vec_to_formula(y.feature_vector))
-
 
     print(time.time() - ts)
 
@@ -184,25 +186,26 @@ class ElMD():
         self.metric = metric
         
         if isinstance(formula, ElMD):
-            return formula
+            # Copy all attributes from the given instance
+            self.__dict__.update(vars(formula))
+        else:
+            self.formula = formula.strip()
+            self.strict_parsing = strict_parsing
+            self.x = x
+            
+            self.periodic_tab, self.el_lookup_folder = _get_periodic_tab(metric)
+            self.petti_lookup, _ = _get_periodic_tab("mod_petti")
+            self.lookup = self._gen_lookup()
+            # self.petti_lookup = self.filter_petti_lookup()
 
-        self.formula = formula.strip()
-        self.strict_parsing = strict_parsing
-        self.x = x
-        
-        self.periodic_tab, self.el_lookup_folder = _get_periodic_tab(metric)
-        self.petti_lookup, _ = _get_periodic_tab("mod_petti")
-        self.lookup = self._gen_lookup()
-        # self.petti_lookup = self.filter_petti_lookup()
+            self.composition = self._parse_formula(self.formula)
+            self.normed_composition = self._normalise_composition(self.composition)
+            self.ratio_vector = self._gen_ratio_vector()
+            self.petti_vector = self._gen_petti_vector()
 
-        self.composition = self._parse_formula(self.formula)
-        self.normed_composition = self._normalise_composition(self.composition)
-        self.ratio_vector = self._gen_ratio_vector()
-        self.petti_vector = self._gen_petti_vector()
+            self.pretty_formula = self.vec_to_formula()
 
-        self.pretty_formula = self.vec_to_formula()
-
-        self.feature_vector = self._gen_feature_vector()
+            self.feature_vector = self._gen_feature_vector()
 
     def full_feature_vector(self, positional_encode=False, min_freq=1e-4):
         feature_dicts = os.listdir(self.el_lookup_folder)
