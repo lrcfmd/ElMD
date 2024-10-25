@@ -220,6 +220,10 @@ class ElMD():
             full_features = []
 
             for f in feature_dicts:
+                # Fixes __pycache__ and __init__ cases
+                if '__' in f:
+                    continue
+                    
                 d, _ = _get_periodic_tab(f)
                 vectors = np.array([d[el] for el in self.normed_composition.keys()])
 
