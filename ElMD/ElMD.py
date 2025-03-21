@@ -136,6 +136,9 @@ def elmd(comp1, comp2, metric="mod_petti", return_assignments=False):
     if isinstance(comp1, ElMD) and isinstance(comp2, ElMD) and comp1.metric != comp2.metric:
         comp2 = ElMD(comp2.formula, metric=comp1.metric)
 
+    if comp1.metric in ['fast', 'mod_petti']:
+        return simple_emd(comp1.feature_vector, comp2.feature_vector)
+
     source_labels = np.array([comp1.periodic_tab[comp1.lookup[i]] for i in np.where(source_demands > 0)[0]], dtype=float)
     sink_labels = np.array([comp2.periodic_tab[comp2.lookup[i]] for i in np.where(sink_demands > 0)[0]], dtype=float)
     
@@ -220,6 +223,10 @@ class ElMD():
             full_features = []
 
             for f in feature_dicts:
+                # Fixes __pycache__ and __init__ cases
+                if '__' in f:
+                    continue
+                    
                 d, _ = _get_periodic_tab(f)
                 vectors = np.array([d[el] for el in self.normed_composition.keys()])
 

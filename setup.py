@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 setup(
   name = 'ElMD',        
   packages = ['ElMD'],  
-  version = '0.5.13',
+  version = '0.5.14',
   license='GPL3',       
   description = 'An implementation of the Element movers distance for chemical similarity of ionic compositions',  
   author = 'Cameron Hagreaves',            
