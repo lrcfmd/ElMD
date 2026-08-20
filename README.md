@@ -8,15 +8,16 @@ This repository provides the reference implementations as described in our paper
 
 If you wish to compute this metric between lots of compositions, the ElM2D high-performance library may be more useful and can be found at www.github.com/lrcfmd/ElM2D.
 
-We recommend installation via pip
+We recommend installation via pip or uv from this repo URL
 
-```
-pip install ElMD
+```bash
+pip install git+https://github.com/lrcfmd/ElMD.git@main
+uv add git+https://github.com/lrcfmd/ElMD.git@main
 ```
 
 For python 3.8+, due to [known library conflicts](https://github.com/materialsproject/matbench/issues/172) it is reccomended to install ElMD separate to its dependencies 
 
-```
+```bash
 pip install ElMD --no-deps
 pip install numpy # if necessary
 pip install numba # Gives significant speedup, but can cause dependency issues with other libraries
