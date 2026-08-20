@@ -4,6 +4,7 @@ on:
   push:
     paths:
     - '**.py' # only run workflow when source files changed
+  workflow_dispatch: # allow manual trigger from the Actions tab
 
 jobs:
   linux-pytest:
