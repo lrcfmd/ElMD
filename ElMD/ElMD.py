@@ -29,7 +29,6 @@ __version__ = "0.5.12"
 import json 
 import re
 import os 
-import pkg_resources
 
 from functools import lru_cache
 from site import getsitepackages
@@ -943,13 +942,14 @@ def network_simplex(source_demands, sink_demands, network_costs):
     dummy_tails = []
     dummy_heads = []
 
-    for node, demand in np.ndenumerate(demands):
+    for node in range(demands.shape[0]):
+        demand = demands[node]
         if demand > 0:
-            dummy_tails.append(node[0])
+            dummy_tails.append(node)
             dummy_heads.append(-1)
         else:
             dummy_tails.append(-1)
-            dummy_heads.append(node[0])
+            dummy_heads.append(node)
 
     # Concatenate these all together
     tails = np.concatenate((conn_tails, np.array(dummy_heads).T)).astype(np.int64)
@@ -984,7 +984,7 @@ def network_simplex(source_demands, sink_demands, network_costs):
     flows = np.concatenate((np.zeros(e), np.array([abs(d) for d in demands]))).astype(np.int64)
 
     # General arrays for the spanning tree
-    potentials = np.array([faux_inf if d <= 0 else -faux_inf for d in demands]).T
+    potentials = np.array([faux_inf if d <= 0 else -faux_inf for d in demands])
     parent = np.concatenate((np.ones(n) * -1, np.array([-2]))).astype(np.int64)
     edge = np.arange(e, e+n).astype(np.int64)
     size = np.concatenate((np.ones(n), np.array([n + 1]))).astype(np.int64)
