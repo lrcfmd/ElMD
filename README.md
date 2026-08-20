@@ -11,8 +11,8 @@ If you wish to compute this metric between lots of compositions, the ElM2D high-
 We recommend installation via pip or uv from this repo URL
 
 ```bash
-pip install git+https://github.com/lrcfmd/ElMD.git@main
-uv add git+https://github.com/lrcfmd/ElMD.git@main
+pip install git+https://github.com/lrcfmd/ElMD.git@master
+uv add git+https://github.com/lrcfmd/ElMD.git@master
 ```
 
 For python 3.8+, due to [known library conflicts](https://github.com/materialsproject/matbench/issues/172) it is reccomended to install ElMD separate to its dependencies 
